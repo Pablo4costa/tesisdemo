@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dossier — Valencia</title>
+  <meta name="description" content="Dossier de propiedades en Valencia" />
+  <link rel="preload" href="img/valencia.jpg" as="image">
+  <link rel="preload" href="img/val.jpg" as="image">
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.5; }
+    header { padding: 16px 24px; border-bottom: 1px solid rgba(0,0,0,.1); display: flex; align-items: center; gap: 16px; }
+    header a { text-decoration: none; color: inherit; opacity: .8; }
+    header a:hover { opacity: 1; }
+    h1 { font-size: clamp(1.25rem, 2vw + 1rem, 2rem); margin: 0; }
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    figure { margin: 0; border: 1px solid rgba(0,0,0,.08); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.02); }
+    img { width: 100%; height: 100%; display: block; object-fit: cover; aspect-ratio: 4/3; }
+    figcaption { padding: 10px 12px; font-size: .95rem; opacity: .8; }
+    /* Ficha */
+    .meta { margin: 16px 0 28px; border: 1px solid rgba(0,0,0,.08); border-radius: 12px; padding: 16px; background: rgba(0,0,0,.02); }
+    .meta h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 14px; }
+    .facts div { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(0,0,0,.08); }
+    .facts span { opacity: .7; font-size: .92rem; }
+    .facts strong { font-weight: 600; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .85rem; border: 1px solid transparent; }
+    .badge.preventa { color: #8a6100; background: #fff3cd; border-color: #ffe69c; }
+    .cta { display: inline-block; margin-top: 14px; background: #0b6b3a; color: white; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 600; }
+    .cta:hover { filter: brightness(1.05); }
+    footer { padding: 24px; text-align: center; opacity: .7; font-size: .9rem; }
+  </style>
+  <link rel="icon" href="data:,">
+  <meta name="robots" content="noindex,nofollow" />
+</head>
+<body>
+  <header>
+    <nav><a href="index.html">← Volver</a></nav>
+    <h1>Dossier: Valencia</h1>
+  </header>
+  <main>
+    <section class="meta" aria-label="Ficha de la propiedad">
+      <h2>Ficha</h2>
+      <div class="facts">
+        <div><span>ID</span><strong>VAL-002</strong></div>
+        <div><span>Ciudad</span><strong>Valencia</strong></div>
+        <div><span>Tipo</span><strong>Residencial</strong></div>
+        <div><span>Título</span><strong>Depto 2 d</strong></div>
+        <div><span>Superficie</span><strong>68 m²</strong></div>
+        <div><span>Rentabilidad objetivo</span><strong>9.1%</strong></div>
+        <div><span>Ticket mínimo</span><strong>€100</strong></div>
+        <div><span>Riesgo</span><strong>Medio</strong></div>
+        <div><span>Estado</span><strong class="badge preventa">Preventa</strong></div>
+      </div>
+      <a class="cta" href="https://ejemplo.com/val-002" target="_blank" rel="noopener">Ver proyecto</a>
+    </section>
+    <section aria-label="Galería de Valencia" class="grid">
+      <figure>
+        <img src="img/valencia.jpg" alt="Propiedad en Valencia - imagen 1" loading="eager" />
+        <figcaption>Propiedad en Valencia</figcaption>
+      </figure>
+      <figure>
+        <img src="img/val.jpg" alt="Vista de Valencia - imagen 2" loading="lazy" />
+        <figcaption>Vista de Valencia</figcaption>
+      </figure>
+    </section>
+  </main>
+  <footer>
+    © Dossier Valencia
+  </footer>
+</body>
+</html>
