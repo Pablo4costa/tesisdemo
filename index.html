@@ -365,13 +365,16 @@
       showTyping();
       try {
         const res = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, sessionId: sid }) // <-- agregado sessionId
-        });
-        const data = await res.json();
-        hideTyping();
-        addMessage(data?.message || '⚠️ No se recibió respuesta', 'bot');
+            method: 'POST',
+            body: new URLSearchParams({
+              message: text,
+              sessionId: sid
+            })
+          });
+          const data = await res.json().catch(() => ({}));
+          hideTyping();
+          addMessage(data?.message || '⚠️ No se recibió respuesta', 'bot');
+
       } catch (err) {
         hideTyping();
         addMessage('⚠️ Error al conectar con el servidor', 'bot');
@@ -437,12 +440,10 @@
         try {
           const res = await fetch(webhookUrl, {
             method: 'POST',
-            mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8'
-            },
-            body: JSON.stringify({ message: text, sessionId: sid })
+            body: new URLSearchParams({
+              message: text,
+              sessionId: sid
+            })
           });
 
           const ct = (res.headers.get('content-type') || '').toLowerCase();
