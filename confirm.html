@@ -1,0 +1,78 @@
+<!doctype html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confirmar compra - Housegur</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="container center">
+<section class="card narrow">
+<h2>Confirmar compra</h2>
+<div id="resumen"></div>
+<div id="resultado" class="muted"></div>
+
+
+<div class="actions">
+<button id="btnConfirm" class="btn primary">Confirmar compra</button>
+<a class="btn" id="btnCancelar">Cancelar</a>
+</div>
+</section>
+<footer class="muted small">Esta acción en la demo ejecutará un webhook n8n (placeholder).</footer>
+</main>
+
+
+<script src="js/app.js"></script>
+<script>
+const usuario = getParam('usuario') || 'Invitado';
+const propiedad = getParam('propiedad');
+const tokens = getParam('tokens') || 0;
+const precio = getParam('precio') || 0;
+
+
+const props = {
+1:{id:1,titulo:'Loft frente al mar'},
+2:{id:2,titulo:'Local en zona céntrica'},
+3:{id:3,titulo:'Casa familiar con jardín'}
+};
+const p = props[propiedad] || props[1];
+
+
+const total = Number(tokens) * Number(precio);
+
+
+document.getElementById('resumen').innerHTML = `
+<p>Usuario: <strong>${escapeHtml(usuario)}</strong></p>
+<p>Propiedad: <strong>${escapeHtml(p.titulo)}</strong></p>
+<p>Cantidad: <strong>${tokens}</strong> tokens</p>
+<p>Precio unitario: <strong>${precio} EUR</strong></p>
+<p>Total: <strong>${total} EUR</strong></p>
+`;
+
+
+document.getElementById('btnConfirm').addEventListener('click', async ()=>{
+// placeholder webhook - reemplazar por tu webhook de n8n
+const webhook = 'https://TU_N8N_WEBHOOK/confirmPurchase';
+const body = {usuario, propiedad, cantidad_tokens: Number(tokens), precio_unitario: Number(precio)};
+
+
+try{
+// simulamos llamada POST; en la demo la URL es placeholder
+const resp = await fakePost(webhook, body);
+document.getElementById('resultado').innerText = '✅ Compra confirmada (simulada).';
+// tras confirmación puedes redirigir a mis-tokens o mostrar resumen
+setTimeout(()=>{
+window.location.href = `mis-tokens.html?usuario=${encodeURIComponent(usuario)}`;
+}, 1200);
+}catch(e){
+document.getElementById('resultado').innerText = '❌ Error al confirmar (simulado).';
+}
+});
+
+
+document.getElementById('btnCancelar').addEventListener('click', ()=>{
+window.location.href = `detalle.html?usuario=${encodeURIComponent(usuario)}&propiedad=${propiedad}`;
+});
+</script>
+</body>
+</html>
