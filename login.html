@@ -1,0 +1,35 @@
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login - Housegur</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="container center">
+<section class="card narrow">
+<h2>Identificarse</h2>
+<p class="muted">Para la demo basta con tu nombre.</p>
+<label class="field">
+<span>Nombre</span>
+<input id="nombre" type="text" placeholder="P. Ej. Pablo Acosta" />
+</label>
+<div class="actions">
+<button id="btnIngresar" class="btn primary">Ingresar</button>
+<a class="btn" href="propiedades.html">Ver sin identificar</a>
+</div>
+</section>
+<footer class="muted small">Identificación demo — no segura</footer>
+</main>
+<script src="js/app.js"></script>
+<script>
+document.getElementById('btnIngresar').addEventListener('click', ()=>{
+const nombre = document.getElementById('nombre').value.trim() || 'Invitado';
+// redirige pasando usuario (nombre). En la demo usamos nombre como identificador.
+const url = new URL(window.location.origin + '/propiedades.html');
+url.searchParams.set('usuario', encodeURIComponent(nombre));
+window.location.href = url.toString();
+});
+</script>
+</body>
+</html>

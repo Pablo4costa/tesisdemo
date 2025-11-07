@@ -1,0 +1,56 @@
+<!doctype html>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="container">
+<header class="site-header">
+<h1>Mi portafolio</h1>
+</header>
+
+
+<div id="userInfo" class="muted small"></div>
+
+
+<section class="card">
+<h3>Tokens por propiedad</h3>
+<table id="tabla" class="tokens-table">
+<thead><tr><th>Propiedad</th><th>Tokens</th><th>Valor aproximado</th></tr></thead>
+<tbody></tbody>
+</table>
+</section>
+
+
+<div class="actions">
+<a class="btn" id="btnVolv">Volver</a>
+</div>
+
+
+<footer class="muted small">Demo — valores aproximados</footer>
+</main>
+
+
+<script src="js/app.js"></script>
+<script>
+const usuario = getParam('usuario') || 'Invitado';
+document.getElementById('userInfo').innerText = `Usuario: ${usuario}`;
+
+
+// mock: simular una llamada al backend que devuelve tokens del usuario
+const mockPortfolio = [
+{propiedad:'Loft frente al mar', tokens:100, precio_unitario:100},
+{propiedad:'Local en zona céntrica', tokens:50, precio_unitario:150}
+];
+
+
+const tbody = document.querySelector('#tabla tbody');
+mockPortfolio.forEach(r =>{
+const tr = document.createElement('tr');
+tr.innerHTML = `<td>${escapeHtml(r.propiedad)}</td><td>${r.tokens}</td><td>${(r.tokens * r.precio_unitario).toLocaleString()} EUR</td>`;
+tbody.appendChild(tr);
+});
+
+
+document.getElementById('btnVolv').href = `propiedades.html?usuario=${encodeURIComponent(usuario)}`;
+</script>
+</body>
+</html>
