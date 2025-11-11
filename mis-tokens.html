@@ -17,11 +17,12 @@
 <thead><tr><th>Propiedad</th><th>Tokens</th><th>Valor aproximado</th></tr></thead>
 <tbody></tbody>
 </table>
+<div id="loadingMsg" class="muted" style="margin-top: 12px; text-align: center;">⏳ Cargando tus tenencias...</div>
 </section>
 
 
 <div class="actions">
-<a class="btn" id="btnVolv">Volver</a>
+<a class="btn" id="btnVolv" href="propiedades.html">Volver</a>
 </div>
 
 
@@ -30,27 +31,66 @@
 
 
 <script src="js/app.js"></script>
+<script src="js/api.js"></script>
 <script>
-const usuario = getParam('usuario') || 'Invitado';
-document.getElementById('userInfo').innerText = `Usuario: ${usuario}`;
-
-
-// mock: simular una llamada al backend que devuelve tokens del usuario
-const mockPortfolio = [
-{propiedad:'Loft frente al mar', tokens:100, precio_unitario:100},
-{propiedad:'Local en zona céntrica', tokens:50, precio_unitario:150}
-];
-
-
+// Get user info from localStorage
+const usuario_id = localStorage.getItem('usuario_id');
+const nombre = localStorage.getItem('nombre');
+const userInfo = document.getElementById('userInfo');
 const tbody = document.querySelector('#tabla tbody');
-mockPortfolio.forEach(r =>{
-const tr = document.createElement('tr');
-tr.innerHTML = `<td>${escapeHtml(r.propiedad)}</td><td>${r.tokens}</td><td>${(r.tokens * r.precio_unitario).toLocaleString()} EUR</td>`;
-tbody.appendChild(tr);
+const loadingMsg = document.getElementById('loadingMsg');
+
+// Display user info
+if (usuario_id && nombre) {
+  userInfo.innerHTML = `👤 <strong>${escapeHtml(nombre)}</strong> (ID: ${usuario_id})`;
+  console.log('[MIS-TOKENS] User info:', nombre, usuario_id);
+} else {
+  userInfo.innerHTML = '👤 Usuario no identificado';
+  console.log('[MIS-TOKENS] No user in localStorage');
+}
+
+// Fetch holdings from API
+async function loadHoldings() {
+  if (!usuario_id) {
+    loadingMsg.textContent = '⚠️ Por favor inicia sesión primero en login.html';
+    console.log('[MIS-TOKENS] No usuario_id in localStorage');
+    return;
+  }
+
+  try {
+    console.log('[MIS-TOKENS] Fetching holdings for user_id:', usuario_id);
+    const holdings = await getHoldings(usuario_id);
+    
+    loadingMsg.style.display = 'none';
+    
+    if (!holdings || (Array.isArray(holdings) && holdings.length === 0)) {
+      tbody.innerHTML = '<tr><td colspan="3" class="muted">No tienes tenencias aún.</td></tr>';
+      console.log('[MIS-TOKENS] No holdings found');
+      return;
+    }
+
+    // Populate table with holdings
+    if (Array.isArray(holdings)) {
+      holdings.forEach(holding => {
+        const tr = document.createElement('tr');
+        const valor_aproximado = (holding.tokens * (holding.precio_unitario || 100)).toLocaleString();
+        tr.innerHTML = `
+          <td>${escapeHtml(holding.propiedad || 'Propiedad')}</td>
+          <td>${holding.tokens || 0}</td>
+          <td>${valor_aproximado} EUR</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      console.log('[MIS-TOKENS] Holdings loaded:', holdings.length, 'items');
+    }
+  } catch (error) {
+    loadingMsg.textContent = '❌ Error al cargar tus tenencias. Intenta de nuevo.';
+    console.error('[MIS-TOKENS] Failed to load holdings:', error);
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+  loadHoldings();
 });
-
-
-document.getElementById('btnVolv').href = `propiedades.html?usuario=${encodeURIComponent(usuario)}`;
 </script>
-</body>
-</html>

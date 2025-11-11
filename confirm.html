@@ -2,76 +2,143 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Confirmar compra - Housegur</title>
+<title>Confirmar transacción - Housegur</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <main class="container center">
 <section class="card narrow">
-<h2>Confirmar compra</h2>
+<h2 id="titulo">Confirmar compra</h2>
 <div id="resumen"></div>
 <div id="resultado" class="muted"></div>
 
 
 <div class="actions">
-<button id="btnConfirm" class="btn primary">Confirmar compra</button>
+<button id="btnConfirm" class="btn primary">Confirmar</button>
 <a class="btn" id="btnCancelar">Cancelar</a>
 </div>
 </section>
-<footer class="muted small">Esta acción en la demo ejecutará un webhook n8n (placeholder).</footer>
+<footer class="muted small">Transacción a través de la API de Housegur.</footer>
 </main>
 
 
 <script src="js/app.js"></script>
+<script src="js/api.js"></script>
 <script>
-const usuario = getParam('usuario') || 'Invitado';
-const propiedad = getParam('propiedad');
-const tokens = getParam('tokens') || 0;
-const precio = getParam('precio') || 0;
+// Get parameters from URL
+const action = getParam('action') || 'buy'; // buy or sell
+const property_id = getParam('property_id');
+const property_title = getParam('property_title') || 'Propiedad';
+const price_per_token = getParam('price_per_token') || 0;
 
+// Get user info from localStorage
+const usuario_id = localStorage.getItem('usuario_id');
+const nombre = localStorage.getItem('nombre');
 
-const props = {
-1:{id:1,titulo:'Loft frente al mar'},
-2:{id:2,titulo:'Local en zona céntrica'},
-3:{id:3,titulo:'Casa familiar con jardín'}
-};
-const p = props[propiedad] || props[1];
+console.log('[CONFIRM] Page loaded:', { action, property_id, usuario_id });
 
-
-const total = Number(tokens) * Number(precio);
-
-
-document.getElementById('resumen').innerHTML = `
-<p>Usuario: <strong>${escapeHtml(usuario)}</strong></p>
-<p>Propiedad: <strong>${escapeHtml(p.titulo)}</strong></p>
-<p>Cantidad: <strong>${tokens}</strong> tokens</p>
-<p>Precio unitario: <strong>${precio} EUR</strong></p>
-<p>Total: <strong>${total} EUR</strong></p>
-`;
-
-
-document.getElementById('btnConfirm').addEventListener('click', async ()=>{
-// placeholder webhook - reemplazar por tu webhook de n8n
-const webhook = 'https://TU_N8N_WEBHOOK/confirmPurchase';
-const body = {usuario, propiedad, cantidad_tokens: Number(tokens), precio_unitario: Number(precio)};
-
-
-try{
-// simulamos llamada POST; en la demo la URL es placeholder
-const resp = await fakePost(webhook, body);
-document.getElementById('resultado').innerText = '✅ Compra confirmada (simulada).';
-// tras confirmación puedes redirigir a mis-tokens o mostrar resumen
-setTimeout(()=>{
-window.location.href = `mis-tokens.html?usuario=${encodeURIComponent(usuario)}`;
-}, 1200);
-}catch(e){
-document.getElementById('resultado').innerText = '❌ Error al confirmar (simulado).';
+// Check if user is logged in
+if (!usuario_id) {
+  document.getElementById('resumen').innerHTML = '<p>⚠️ <strong>No estás identificado.</strong></p>';
+  document.getElementById('resultado').textContent = 'Por favor inicia sesión primero.';
+  document.getElementById('btnConfirm').disabled = true;
 }
+
+// Update title based on action
+const titulo = document.getElementById('titulo');
+if (action === 'sell') {
+  titulo.textContent = 'Confirmar venta de tokens';
+}
+
+// Set cancel button behavior
+document.getElementById('btnCancelar').addEventListener('click', () => {
+  console.log('[CONFIRM] Cancel clicked, redirecting to propiedades');
+  window.location.href = 'propiedades.html';
 });
 
+// Show summary
+document.getElementById('resumen').innerHTML = `
+<p>Acción: <strong>${action === 'buy' ? 'Comprar tokens' : 'Vender tokens'}</strong></p>
+<p>Usuario: <strong>${escapeHtml(nombre || 'Invitado')}</strong></p>
+<p>Propiedad: <strong>${escapeHtml(property_title)}</strong></p>
+<p>Precio por token: <strong>${price_per_token} EUR</strong></p>
+<div style="margin-top: 12px;">
+  <label class="field">
+    <span>Cantidad de tokens:</span>
+    <input id="cantidadTokens" type="number" placeholder="Ej. 10" min="1" value="10" />
+  </label>
+</div>
+<div id="totalCalc" style="margin-top: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+  <p>Total: <strong id="totalEUR">100 EUR</strong></p>
+</div>
+`;
 
-document.getElementById('btnCancelar').addEventListener('click', ()=>{
-window.location.href = `detalle.html?usuario=${encodeURIComponent(usuario)}&propiedad=${propiedad}`;
+// Update total calculation on input change
+const cantidadInput = document.getElementById('cantidadTokens');
+const totalEUR = document.getElementById('totalEUR');
+
+function updateTotal() {
+  const cantidad = Number(cantidadInput.value) || 0;
+  const total = cantidad * Number(price_per_token);
+  totalEUR.textContent = total.toLocaleString() + ' EUR';
+}
+
+cantidadInput.addEventListener('input', updateTotal);
+updateTotal(); // Initial calculation
+
+// Handle confirm button
+document.getElementById('btnConfirm').addEventListener('click', async () => {
+  if (!usuario_id) {
+    document.getElementById('resultado').textContent = '❌ No estás identificado';
+    return;
+  }
+
+  if (!property_id) {
+    document.getElementById('resultado').textContent = '❌ Propiedad no especificada';
+    return;
+  }
+
+  const tokens = Number(cantidadInput.value);
+  if (!tokens || tokens <= 0) {
+    document.getElementById('resultado').textContent = '⚠️ Ingresa una cantidad válida de tokens';
+    return;
+  }
+
+  document.getElementById('btnConfirm').disabled = true;
+  document.getElementById('resultado').textContent = '⏳ Procesando transacción...';
+
+  try {
+    let response;
+    
+    if (action === 'buy') {
+      console.log('[CONFIRM] Calling buyTokens:', { usuario_id, property_id, tokens });
+      response = await buyTokens(usuario_id, property_id, tokens);
+    } else if (action === 'sell') {
+      console.log('[CONFIRM] Calling sellTokens:', { usuario_id, property_id, tokens });
+      response = await sellTokens(usuario_id, property_id, tokens);
+    }
+
+    console.log('[CONFIRM] Transaction response:', response);
+    
+    // Show success message
+    document.getElementById('resultado').innerHTML = 
+      `✅ <strong>Transacción completada exitosamente!</strong><br>
+       Serás redirigido a tu portafolio en 3 segundos...`;
+    document.getElementById('resultado').style.color = '#28a745';
+
+    // Redirect to mis-tokens after 3 seconds
+    setTimeout(() => {
+      window.location.href = 'mis-tokens.html';
+    }, 3000);
+
+  } catch (error) {
+    console.error('[CONFIRM] Transaction failed:', error);
+    document.getElementById('resultado').innerHTML = 
+      `❌ <strong>Error en la transacción</strong><br>
+       ${escapeHtml(error.message || 'Intenta de nuevo más tarde.')}`;
+    document.getElementById('resultado').style.color = '#dc3545';
+    document.getElementById('btnConfirm').disabled = false;
+  }
 });
 </script>
 </body>
