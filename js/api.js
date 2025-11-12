@@ -1,10 +1,12 @@
 /**
  * API Integration Module for Housegur
- * Communicates with https://housegur-api.up.railway.app
+ * Uses centralized configuration from js/config.js
  * Modern async/await syntax with descriptive console logs
  */
 
-const API_BASE = 'https://housegur-api.up.railway.app';
+// API_BASE is imported from CONFIG (defined in js/config.js)
+// Make sure js/config.js is loaded before this script
+const API_BASE = window.CONFIG?.API_BASE || 'https://housegur-api.up.railway.app';
 
 /**
  * Login user with nombre and email

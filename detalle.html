@@ -32,70 +32,83 @@
 </main>
 
 <script src="js/app.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/chat.js"></script>
 <script>
-/* datos mínimos (si tu app ya define propsMock en otro sitio, elimina esta definición duplicada) */
-const propsMock = [
-  {id:1, ciudad:'Alicante', tipo:'Departamento', titulo:'Loft frente al mar', m2:85, rentabilidad:7.5, precio:100, tokens_disponibles:10000, tokens_total:12000, fecha:'2025-10-20', fotos:['img/alicante-loft-1.jpg','img/alicante-loft-2.jpg']},
-  {id:2, ciudad:'Madrid', tipo:'Local comercial', titulo:'Local en zona céntrica', m2:120, rentabilidad:8.2, precio:150, tokens_disponibles:5000, tokens_total:8000, fecha:'2025-11-02', fotos:['img/madrid-local-1.jpg','img/madrid-local-2.jpg']},
-  {id:3, ciudad:'Barcelona', tipo:'Casa', titulo:'Casa familiar con jardín', m2:200, rentabilidad:6.0, precio:200, tokens_disponibles:2000, tokens_total:3000, fecha:'2025-09-30', fotos:['img/barcelona-casa-1.jpg','img/barcelona-casa-2.jpg','img/barcelona-casa-3.jpg']}
-];
-
 function getParamRaw(name){ return new URLSearchParams(location.search).get(name); }
 
-function renderDetalle(){
-  const propId = parseInt(getParamRaw('propiedad'),10) || propsMock[0].id;
-  const prop = propsMock.find(p => p.id === propId) || propsMock[0];
+// Render detail page using the live API. This avoids demo mocks.
+async function renderDetalle(){
   const detalle = document.getElementById('detalle');
   if (!detalle) return;
-  const fotos = (prop.fotos && prop.fotos.length) ? prop.fotos : ['img/placeholder.png'];
-  detalle.innerHTML = `
-    <h2>${escapeHtml(prop.titulo)}</h2>
-    <p class="muted">${prop.ciudad} • ${prop.tipo} • ${prop.m2} m²</p>
-    <div class="media-wrap">
-      <img src="${fotos[0]}" class="prop-main" id="mainImg" data-index="0" alt="${escapeHtml(prop.titulo)}">
-      <div class="carousel-nav carousel-prev" id="prevBtn">&lt;</div>
-      <div class="carousel-nav carousel-next" id="nextBtn">&gt;</div>
-    </div>
-    <div class="prop-thumbs" id="thumbs">
-      ${fotos.map((f,i)=>`<img src="${f}" class="prop-thumb${i===0?' active':''}" data-index="${i}" alt="thumb ${i+1}">`).join('')}
-    </div>
-    <div class="controls-row">
-      <div>Precio por token: <strong>${prop.precio} EUR</strong></div>
-      <label><input type="checkbox" id="autoplay" checked> Autoplay</label>
-    </div>
-    <p style="margin-top:12px;">Rentabilidad objetivo: <strong>${prop.rentabilidad}%</strong></p>
-  `;
 
-  // behavior carousel
-  const mainImg = document.getElementById('mainImg');
-  const thumbs = Array.from(document.querySelectorAll('.prop-thumb'));
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const autoplayToggle = document.getElementById('autoplay');
+  const propId = parseInt(getParamRaw('propiedad'),10);
+  try {
+    // Fetch properties from API and find the requested one
+    const props = await getProperties();
+    // store globally for chat usage
+    window.propiedadesLoaded = Array.isArray(props) ? props : [];
 
-  function showIndex(i){
-    const idx = (i + thumbs.length) % thumbs.length;
-    mainImg.src = thumbs[idx].src;
-    mainImg.dataset.index = idx;
-    thumbs.forEach(t=>t.classList.remove('active'));
-    thumbs[idx].classList.add('active');
+    const prop = window.propiedadesLoaded.find(p => Number(p.id) === Number(propId));
+    if (!prop) {
+      detalle.innerHTML = `<p class="muted">Propiedad no encontrada.</p>`;
+      return;
+    }
+
+    const fotos = (prop.fotos && prop.fotos.length) ? prop.fotos : ['img/placeholder.png'];
+    detalle.innerHTML = `
+      <h2>${escapeHtml(prop.titulo || 'Propiedad')}</h2>
+      <p class="muted">${escapeHtml(prop.ciudad || '')} • ${escapeHtml(prop.tipo || '')} • ${prop.m2 || ''} m²</p>
+      <div class="media-wrap">
+        <img src="${fotos[0]}" class="prop-main" id="mainImg" data-index="0" alt="${escapeHtml(prop.titulo || '')}">
+        <div class="carousel-nav carousel-prev" id="prevBtn">&lt;</div>
+        <div class="carousel-nav carousel-next" id="nextBtn">&gt;</div>
+      </div>
+      <div class="prop-thumbs" id="thumbs">
+        ${fotos.map((f,i)=>`<img src="${f}" class="prop-thumb${i===0?' active':''}" data-index="${i}" alt="thumb ${i+1}">`).join('')}
+      </div>
+      <div class="controls-row">
+        <div>Precio por token: <strong>${prop.precio || ''} EUR</strong></div>
+        <label><input type="checkbox" id="autoplay" checked> Autoplay</label>
+      </div>
+      <p style="margin-top:12px;">Rentabilidad objetivo: <strong>${prop.rentabilidad || ''}%</strong></p>
+    `;
+
+    // behavior carousel
+    const mainImg = document.getElementById('mainImg');
+    const thumbs = Array.from(document.querySelectorAll('.prop-thumb'));
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const autoplayToggle = document.getElementById('autoplay');
+
+    function showIndex(i){
+      const idx = (i + thumbs.length) % thumbs.length;
+      mainImg.src = thumbs[idx].src;
+      mainImg.dataset.index = idx;
+      thumbs.forEach(t=>t.classList.remove('active'));
+      thumbs[idx].classList.add('active');
+    }
+
+    thumbs.forEach(t => t.addEventListener('click', ()=> showIndex(parseInt(t.dataset.index,10))));
+    prevBtn && prevBtn.addEventListener('click', ()=> showIndex(parseInt(mainImg.dataset.index,10)-1));
+    nextBtn && nextBtn.addEventListener('click', ()=> showIndex(parseInt(mainImg.dataset.index,10)+1));
+
+    // autoplay
+    let timer = null;
+    const INTERVAL = 3000;
+    function startAuto(){ if(timer) return; timer = setInterval(()=> nextBtn.click(), INTERVAL); }
+    function stopAuto(){ if(!timer) return; clearInterval(timer); timer = null; }
+    if (autoplayToggle.checked) startAuto();
+    autoplayToggle.addEventListener('change', ()=> autoplayToggle.checked ? startAuto() : stopAuto());
+    const mediaWrap = document.querySelector('.media-wrap');
+    mediaWrap && mediaWrap.addEventListener('mouseenter', stopAuto);
+    mediaWrap && mediaWrap.addEventListener('mouseleave', ()=> { if(autoplayToggle.checked) startAuto(); });
+
+  } catch (err) {
+    console.error('[DETALLE] Failed to load property from API', err);
+    detalle.innerHTML = `<p class="muted">Error cargando la propiedad.</p>`;
   }
-
-  thumbs.forEach(t => t.addEventListener('click', ()=> showIndex(parseInt(t.dataset.index,10))));
-  prevBtn && prevBtn.addEventListener('click', ()=> showIndex(parseInt(mainImg.dataset.index,10)-1));
-  nextBtn && nextBtn.addEventListener('click', ()=> showIndex(parseInt(mainImg.dataset.index,10)+1));
-
-  // autoplay
-  let timer = null;
-  const INTERVAL = 3000;
-  function startAuto(){ if(timer) return; timer = setInterval(()=> nextBtn.click(), INTERVAL); }
-  function stopAuto(){ if(!timer) return; clearInterval(timer); timer = null; }
-  if (autoplayToggle.checked) startAuto();
-  autoplayToggle.addEventListener('change', ()=> autoplayToggle.checked ? startAuto() : stopAuto());
-  const mediaWrap = document.querySelector('.media-wrap');
-  mediaWrap && mediaWrap.addEventListener('mouseenter', stopAuto);
-  mediaWrap && mediaWrap.addEventListener('mouseleave', ()=> { if(autoplayToggle.checked) startAuto(); });
 }
 
 /* small escape helper (re-use from propiedades if available) */
@@ -113,7 +126,10 @@ async function initChatPartialAndChat(){
 
   if (typeof initGlobalChat === 'function') {
     const usuario = getParamRaw('usuario') || 'Invitado';
-    initGlobalChat('globalChatContainer', { user: usuario, props: propsMock });
+    // Get chat webhook from centralized config (js/config.js)
+    const CHAT_WEBHOOK = window.CONFIG?.CHAT_WEBHOOK || 'https://palasino.app.n8n.cloud/webhook/housegur-chat';
+    const propsForChat = window.propiedadesLoaded || [];
+    initGlobalChat('globalChatContainer', { user: usuario, props: propsForChat, webhookUrl: CHAT_WEBHOOK });
     // enviar pregunta pendiente si existe
     const pending = sessionStorage.getItem('housegur.pendingQuestion');
     if (pending && window.__housegur_chat && typeof window.__housegur_chat.sendMessage === 'function') {

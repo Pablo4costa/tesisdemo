@@ -89,12 +89,12 @@
 
     <section id="grid" class="grid" aria-live="polite"></section>
 
-    <div class="actions" style="margin-top:12px;">
-      <button id="btnMisTokens" class="btn">Ver mis tokens</button>
-      <a class="btn" href="index.html">Volver</a>
-    </div>
+        <div class="actions" style="margin-top:12px;">
+          <button id="btnMisTokens" class="btn">Ver mis tokens</button>
+          <a class="btn" href="index.html">Volver</a>
+        </div>
 
-    <footer class="muted small" style="margin-top:10px;">Datos mock para demo</footer>
+        <footer class="muted small" style="margin-top:10px;">Datos servidos por la API de Housegur</footer>
   </div>
 
   <!-- columna derecha: asistente virtual -->
@@ -106,17 +106,13 @@
 </main>
 
 <script src="js/app.js"></script>
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/chat.js"></script>
 <script>
 /* --- listado y filtros (definiciones completas) */
-const propsMock = [
-  {id:1, ciudad:'Alicante', tipo:'Departamento', titulo:'Loft frente al mar', m2:85, rentabilidad:7.5, precio:100, tokens_disponibles:10000, tokens_total:12000, fecha:'2025-10-20', fotos:['img/alicante-loft-1.jpg','img/al.jpg']},
-  {id:2, ciudad:'Madrid', tipo:'Local comercial', titulo:'Local en zona céntrica', m2:120, rentabilidad:8.2, precio:150, tokens_disponibles:5000, tokens_total:8000, fecha:'2025-11-02', fotos:['img/madrid.jpg','img/propmadrid.jpg']},
-  {id:3, ciudad:'Barcelona', tipo:'Casa', titulo:'Casa familiar con jardín', m2:200, rentabilidad:6.0, precio:200, tokens_disponibles:2000, tokens_total:3000, fecha:'2025-09-30', fotos:['img/valencia.jpg','img/val.jpg','img/hero.jpg']}
-];
-
-let propiedadesActuales = propsMock; // Will be updated with API data
+// Production: start with empty list and populate from API
+let propiedadesActuales = [];
 const STORAGE_KEY = 'propiedades.filters';
 const grid = document.getElementById('grid');
 const filterCiudad = document.getElementById('filterCiudad');
@@ -314,11 +310,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       propiedadesActuales = props;
       console.log('[PROPIEDADES] API properties loaded:', props.length, 'properties');
     } else {
-      console.log('[PROPIEDADES] API returned empty or invalid data, using mock');
+      console.log('[PROPIEDADES] API returned empty or invalid data');
+      propiedadesActuales = [];
     }
   } catch (error) {
-    console.warn('[PROPIEDADES] Failed to fetch from API, using mock data:', error);
-    propiedadesActuales = propsMock;
+    console.warn('[PROPIEDADES] Failed to fetch from API:', error);
+    propiedadesActuales = [];
   }
 
   try {
@@ -342,8 +339,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // inicializar chat
   if (typeof initGlobalChat === 'function') {
-    const usuario = nombre || getParam('usuario') || 'Invitado';
-    initGlobalChat('globalChatContainer', { user: usuario, props: propiedadesActuales });
+    // In production rely on stored user info (localStorage); do not read user from URL params.
+    const usuario = nombre || 'Invitado';
+    // Get chat webhook from centralized config (js/config.js)
+    const CHAT_WEBHOOK = window.CONFIG?.CHAT_WEBHOOK || 'https://palasino.app.n8n.cloud/webhook/housegur-chat';
+    initGlobalChat('globalChatContainer', { user: usuario, props: propiedadesActuales, webhookUrl: CHAT_WEBHOOK });
     // if there was a pending question set before chat init, send it
     const pendingQ = sessionStorage.getItem('housegur.pendingQuestion');
     if (pendingQ && window.__housegur_chat && typeof window.__housegur_chat.sendMessage === 'function') {

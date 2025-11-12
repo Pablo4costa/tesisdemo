@@ -1,18 +1,12 @@
 // ...new file...
+// Dumb chat client: UI + webhook communication only.
 (function(window){
   function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
 
-  function defaultReply(prompt, props){
-    const lower = (prompt||'').toLowerCase();
-    if (lower.includes('alicante')) return `La propiedad de Alicante: rentabilidad ${props[0].rentabilidad}% — ${props[0].tokens_disponibles.toLocaleString()} tokens disponibles.`;
-    if (lower.includes('rentabilidad')) return `Ej: Alicante ${props[0].rentabilidad}%, Madrid ${props[1].rentabilidad}%, Barcelona ${props[2].rentabilidad}%.`;
-    if (lower.includes('precio') || lower.includes('token')) return `Precios (ej.): Alicante ${props[0].precio} EUR, Madrid ${props[1].precio} EUR.`;
-    return "Puedo darte datos sobre ciudades, precios por token, rentabilidad o tokens disponibles. Pregunta por una propiedad.";
-  }
-
+  // Create chat UI and wire send to a webhook provided via opts.webhookUrl
   function createChat(container, opts){
     const user = opts.user || 'guest';
-    const propsMock = opts.props || [];
+    const WEBHOOK = opts.webhookUrl || null; // e.g. https://palasino.app.n8n.cloud/webhook/housegur-chat
     const STORAGE_KEY = 'housegur.chat.' + user;
 
     container.innerHTML = `
@@ -21,7 +15,7 @@
           <div style="width:40px;height:40px;border-radius:8px;background:#0b7cff;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">AV</div>
           <div>
             <div class="chat-title">Asistente Housegur</div>
-            <div class="muted" style="font-size:12px">Haz preguntas sobre las propiedades</div>
+            <div class="muted" style="font-size:12px">Conecta con el asistente.</div>
           </div>
         </div>
         <div class="chat-body" id="__hg_chat_body" style="min-height:120px;max-height:56vh;overflow:auto;padding-right:6px;"></div>
@@ -61,25 +55,63 @@
     }
 
     let pending = false;
-    function sendMessage(text){
+    async function sendMessage(text){
       if (!text || pending) return;
       pending = true;
       append('user', text);
 
-      const msgs = load();
-      msgs.push({role:'assistant', text:'...', loading:true});
-      save(msgs);
-      render();
+      // Show loading placeholder
+      append('assistant', '...');
 
-      setTimeout(()=>{
+      // If no webhook configured, remove loading and show a helpful message
+      if (!WEBHOOK) {
+        // remove last assistant loading
         const cur = load();
-        if (cur.length && cur[cur.length-1].loading) cur.pop();
-        const reply = (opts.getReply || defaultReply)(text, propsMock);
-        cur.push({role:'assistant', text: reply});
+        if (cur.length && cur[cur.length-1].text === '...') cur.pop();
+        cur.push({role:'assistant', text:'No webhook configured. Chat is disabled.'});
         save(cur);
         render();
         pending = false;
-      }, 600 + Math.random()*700);
+        return;
+      }
+
+      try {
+        const resp = await fetch(WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, user })
+        });
+
+        // remove loading placeholder
+        const cur = load();
+        if (cur.length && cur[cur.length-1].text === '...') cur.pop();
+
+        if (!resp.ok) {
+          const errText = `Error from webhook: ${resp.status}`;
+          cur.push({role:'assistant', text: errText});
+          save(cur);
+          render();
+          pending = false;
+          return;
+        }
+
+        const data = await resp.json();
+
+        // Expect the webhook to return a JSON object with a `reply` field or `message`
+        const reply = data.reply || data.message || JSON.stringify(data);
+        cur.push({role:'assistant', text: String(reply)});
+        save(cur);
+        render();
+      } catch (err) {
+        const cur = load();
+        if (cur.length && cur[cur.length-1].text === '...') cur.pop();
+        cur.push({role:'assistant', text: 'Network error sending to webhook.'});
+        save(cur);
+        render();
+        console.error('[CHAT] Webhook error:', err);
+      } finally {
+        pending = false;
+      }
     }
 
     send.addEventListener('click', ()=>{ const v = input.value.trim(); if(!v) return; input.value=''; sendMessage(v); });
