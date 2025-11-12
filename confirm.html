@@ -111,11 +111,11 @@ document.getElementById('btnConfirm').addEventListener('click', async () => {
     let response;
     
     if (action === 'buy') {
-      console.log('[CONFIRM] Calling buyTokens:', { usuario_id, property_id, tokens });
-      response = await buyTokens(usuario_id, property_id, tokens);
+      console.log('[CONFIRM] Calling buyTokens:', { usuario_id, property_id, tokens, price_per_token });
+      response = await buyTokens(usuario_id, property_id, tokens, Number(price_per_token));
     } else if (action === 'sell') {
-      console.log('[CONFIRM] Calling sellTokens:', { usuario_id, property_id, tokens });
-      response = await sellTokens(usuario_id, property_id, tokens);
+      console.log('[CONFIRM] Calling sellTokens:', { usuario_id, property_id, tokens, price_per_token });
+      response = await sellTokens(usuario_id, property_id, tokens, Number(price_per_token));
     }
 
     console.log('[CONFIRM] Transaction response:', response);

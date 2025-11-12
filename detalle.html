@@ -56,7 +56,11 @@ async function renderDetalle(){
       return;
     }
 
-    const fotos = (prop.fotos && prop.fotos.length) ? prop.fotos : ['img/placeholder.png'];
+    const fotos = Array.isArray(prop.fotos) && prop.fotos.length
+      ? prop.fotos
+      : (prop.url ? [prop.url] : ['img/placeholder.png']);
+    const pricePerToken = Number(prop.precio_token ?? prop.precio ?? 0);
+    const rentObj = prop.rentabilidad_objetivo ?? prop.rentabilidad ?? '';
     detalle.innerHTML = `
       <h2>${escapeHtml(prop.titulo || 'Propiedad')}</h2>
       <p class="muted">${escapeHtml(prop.ciudad || '')} • ${escapeHtml(prop.tipo || '')} • ${prop.m2 || ''} m²</p>
@@ -69,10 +73,10 @@ async function renderDetalle(){
         ${fotos.map((f,i)=>`<img src="${f}" class="prop-thumb${i===0?' active':''}" data-index="${i}" alt="thumb ${i+1}">`).join('')}
       </div>
       <div class="controls-row">
-        <div>Precio por token: <strong>${prop.precio || ''} EUR</strong></div>
+        <div>Precio por token: <strong>${pricePerToken || ''} EUR</strong></div>
         <label><input type="checkbox" id="autoplay" checked> Autoplay</label>
       </div>
-      <p style="margin-top:12px;">Rentabilidad objetivo: <strong>${prop.rentabilidad || ''}%</strong></p>
+      <p style="margin-top:12px;">Rentabilidad objetivo: <strong>${rentObj}</strong></p>
     `;
 
     // behavior carousel

@@ -162,13 +162,13 @@ function applyFiltersAndRender(){
 
   const min = parseFloat(minPrecio.value);
   const max = parseFloat(maxPrecio.value);
-  if (!isNaN(min)) list = list.filter(p=>p.precio >= min);
-  if (!isNaN(max)) list = list.filter(p=>p.precio <= max);
+  if (!isNaN(min)) list = list.filter(p => Number(p.precio_token ?? p.precio ?? 0) >= min);
+  if (!isNaN(max)) list = list.filter(p => Number(p.precio_token ?? p.precio ?? 0) <= max);
 
   switch(sortBy.value){
-    case 'reciente': list.sort((a,b)=> new Date(b.fecha) - new Date(a.fecha)); break;
-    case 'precioAsc': list.sort((a,b)=> a.precio - b.precio); break;
-    case 'precioDesc': list.sort((a,b)=> b.precio - a.precio); break;
+    case 'reciente': list.sort((a,b)=> new Date(b.fecha_creacion ?? b.fecha ?? 0) - new Date(a.fecha_creacion ?? a.fecha ?? 0)); break;
+    case 'precioAsc': list.sort((a,b)=> Number(a.precio_token ?? a.precio ?? 0) - Number(b.precio_token ?? b.precio ?? 0)); break;
+    case 'precioDesc': list.sort((a,b)=> Number(b.precio_token ?? b.precio ?? 0) - Number(a.precio_token ?? a.precio ?? 0)); break;
   }
 
   renderList(list);
@@ -182,12 +182,13 @@ function renderList(list){
     return;
   }
   list.forEach(p => {
-    const foto = (p.fotos && p.fotos.length) ? p.fotos[0] : 'img/placeholder.png';
-    const total = Number(p.tokens_total) || 0;
-    const available = Number(p.tokens_disponibles) || 0;
-    const soldPercent = total > 0 ? ((total - available) / total) * 100 : 0;
-    const soldLabel = total > 0 ? `${soldPercent.toFixed(1)}% vendidos` : 'Sin datos';
-    const progressWidth = Math.max(0, Math.min(100, soldPercent));
+  const foto = (p.fotos && p.fotos.length) ? p.fotos[0] : (p.url ? p.url : 'img/placeholder.png');
+  const total = Number(p.total_tokens ?? p.tokens_total ?? 0);
+  const available = Number(p.tokens_disponibles ?? 0);
+  const soldPercent = total > 0 ? ((total - available) / total) * 100 : 0;
+  const soldLabel = total > 0 ? `${soldPercent.toFixed(1)}% vendidos` : 'Sin datos';
+  const progressWidth = Math.max(0, Math.min(100, soldPercent));
+  const pricePerToken = Number(p.precio_token ?? p.precio ?? 0);
     const el = document.createElement('article');
     el.className = 'card prop';
     el.innerHTML = `
@@ -196,14 +197,14 @@ function renderList(list){
       </div>
       <h3>${escapeHtml(p.titulo)}</h3>
       <p class="muted">${p.ciudad} • ${p.tipo} • ${p.m2} m²</p>
-      <p>Precio por token: <strong>${p.precio} EUR</strong></p>
+  <p>Precio por token: <strong>${pricePerToken} EUR</strong></p>
       <div class="prop-progress" aria-hidden="true">
         <div class="prop-progress-bar" style="width:${progressWidth}%"></div>
       </div>
       <div class="prop-percent">${soldLabel} — ${available.toLocaleString()} tokens disponibles</div>
       <div class="card-actions" style="margin-top:8px;">
         <a class="btn small" href="detalle.html?propiedad=${p.id}">Ver detalle</a>
-        <button class="btn small" data-action="buy" data-prop="${p.id}" data-precio="${p.precio}">Comprar tokens</button>
+  <button class="btn small" data-action="buy" data-prop="${p.id}" data-precio="${pricePerToken}">Comprar tokens</button>
         <button class="btn small" data-prop="${p.id}" data-action="ask">Preguntar sobre esta</button>
       </div>
     `;

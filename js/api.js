@@ -106,14 +106,16 @@ async function getHoldings(user_id) {
  * @param {number} tokens - Number of tokens to buy
  * @returns {Promise<Object>} Transaction response
  */
-async function buyTokens(user_id, property_id, tokens) {
+async function buyTokens(user_id, property_id, tokens, precio_unitario) {
   console.log(`[API] Buying ${tokens} tokens for property ${property_id} (user: ${user_id})`);
   
   try {
+    const body = { user_id, property_id, tokens };
+    if (precio_unitario !== undefined) body.precio_unitario = Number(precio_unitario);
     const res = await fetch(`${API_BASE}/transactions/buy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id, property_id, tokens })
+      body: JSON.stringify(body)
     });
     
     if (!res.ok) {
@@ -136,14 +138,16 @@ async function buyTokens(user_id, property_id, tokens) {
  * @param {number} tokens - Number of tokens to sell
  * @returns {Promise<Object>} Transaction response
  */
-async function sellTokens(user_id, property_id, tokens) {
+async function sellTokens(user_id, property_id, tokens, precio_unitario) {
   console.log(`[API] Selling ${tokens} tokens for property ${property_id} (user: ${user_id})`);
   
   try {
+    const body = { user_id, property_id, tokens };
+    if (precio_unitario !== undefined) body.precio_unitario = Number(precio_unitario);
     const res = await fetch(`${API_BASE}/transactions/sell`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id, property_id, tokens })
+      body: JSON.stringify(body)
     });
     
     if (!res.ok) {

@@ -69,14 +69,17 @@ async function loadHoldings() {
       return;
     }
 
-    // Populate table with holdings
+    // Populate table with holdings (mapping tolerant to API field names)
     if (Array.isArray(holdings)) {
       holdings.forEach(holding => {
         const tr = document.createElement('tr');
-        const valor_aproximado = (holding.tokens * (holding.precio_unitario || 100)).toLocaleString();
+        const tokens = Number(holding.tokens ?? holding.cantidad_tokens ?? holding.total_tokens ?? 0);
+        const precioUnit = Number(holding.precio_unitario ?? holding.precio_token ?? holding.price_per_token ?? 0);
+        const propiedadName = holding.propiedad ?? holding.titulo ?? holding.nombre_propiedad ?? `ID ${holding.propiedad_id ?? ''}`;
+        const valor_aproximado = (tokens * (precioUnit || 0)).toLocaleString();
         tr.innerHTML = `
-          <td>${escapeHtml(holding.propiedad || 'Propiedad')}</td>
-          <td>${holding.tokens || 0}</td>
+          <td>${escapeHtml(propiedadName)}</td>
+          <td>${tokens}</td>
           <td>${valor_aproximado} EUR</td>
         `;
         tbody.appendChild(tr);
