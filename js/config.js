@@ -6,7 +6,7 @@
 // API Base URL - points to the Housegur backend
 const CONFIG = {
   // Production API endpoint
-  API_BASE: 'https://housegur-api.up.railway.app',
+  API_BASE: 'https://housegur-api-production.up.railway.app',
   
   // n8n Chat Webhook - where user messages are sent for AI responses
   CHAT_WEBHOOK: 'https://palasino.app.n8n.cloud/webhook/housegur-chat',

@@ -6,7 +6,7 @@
 
 // API_BASE is imported from CONFIG (defined in js/config.js)
 // Make sure js/config.js is loaded before this script
-const API_BASE = window.CONFIG?.API_BASE || 'https://housegur-api.up.railway.app';
+const API_BASE = window.CONFIG?.API_BASE || 'https://housegur-api-production.up.railway.app';
 
 /**
  * Login user with nombre and email
