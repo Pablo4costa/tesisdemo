@@ -9,16 +9,152 @@
 --border:#e3e8ee;
 }
 *{box-sizing:border-box}
-body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#1f2937;margin:0}
-.container{max-width:980px;margin:36px auto;padding:16px}
-.center{text-align:center}
-.site-header h1{margin:0;font-size:1.6rem;color:var(--accent)}
-.site-header p{margin:6px 0 18px;color:var(--muted)}
-.card{background:var(--card);border:1px solid var(--border);padding:18px;border-radius:10px;box-shadow:0 4px 18px rgba(15,23,42,0.04);margin:16px 0}
+body{
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background-image: url('../img/fondoGeneral.png');
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center;
+  color:#1f2937;
+  margin:0;
+  min-height: 100vh;
+}
+
+.container{
+  max-width:980px;
+  margin:36px auto;
+  padding:16px;
+  background-color: rgba(255, 255, 255, 0.85); /* reducido desde 0.95 */
+  border-radius: 8px;
+}
+
+.container.center{
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
+  min-height: 100vh;
+  padding-top: 60px;
+}
+
+.container.center h1{
+  font-size: 2.5rem;
+  margin: 0 0 10px 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.container.center .subtitle{
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.container.center section{
+  text-align: center;
+  margin: 20px 0;
+  max-width: 720px;
+  width: 100%;
+}
+
+.container.center section h2{
+  font-size: 1.8rem;
+  margin: 15px 0;
+  color: var(--accent);
+}
+
+.container.center section p{
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 600px;
+  margin: 10px auto;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:18px;
+  border-radius:10px;
+  box-shadow:0 4px 18px rgba(15,23,42,0.04);
+  margin:16px 0;
+  background-color: white;
+}
 .card.narrow{max-width:720px;margin:18px auto}
-.field{display:block;margin:12px 0}
-.field input{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px}
-.actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.field{
+  display: flex;
+  flex-direction: column;
+  margin: 16px 0;
+  width: 100%;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* etiqueta arriba del input */
+.field > span{
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 6px;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* input sin padding extra a la izquierda */
+.field input{
+  width: 100%;
+  padding: 10px 12px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.field input:focus{
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* asegurar inputs centrados en .card.narrow (login) */
+.card.narrow .field{
+  max-width: 360px;
+  margin: 16px auto;
+}
+
+.card.narrow .field input{
+  max-width: 100%;
+}
+
+/* en pantallas pequeñas apilar label arriba del input */
+@media (max-width:520px){
+  .field{ display:block; }
+  .field > span{ position: static; transform:none; width:100%; margin-bottom:6px; }
+  .field input{ padding-left: 12px; }
+}
+
+.actions{
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.actions.centered{
+  justify-content: center;
+  margin-top: 40px;
+}
+
+/* centrar botones en formularios estrechos (login) */
+.card.narrow .actions {
+  justify-content: center;
+  margin-top: 24px;
+  gap: 12px;
+}
+
 .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:1px solid transparent;text-decoration:none;background:transparent;color:var(--accent);cursor:pointer}
 .btn.primary{background:var(--accent);color:white}
 .btn.small{padding:6px 10px;font-size:0.9rem}
@@ -32,11 +168,59 @@ body{font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);col
 @media (max-width:520px){.actions{flex-direction:column}.card{padding:14px}}
 
 /* Header compartido */
-.site-header{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
-.site-logo{width:88px;height:auto;object-fit:contain;}
-.header-text{display:flex;flex-direction:column;}
-.header-title{font-size:24px;margin:0;color:#111;}
-.header-sub{font-size:14px;color:#555;margin:6px 0 0;}
+.site-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  justify-content:center; /* centrado horizontal */
+  max-width:980px;
+  width:100%;
+  margin:0 auto 28px;
+  padding:12px 0;
+}
+.site-logo{
+  width:72px;
+  height:auto;
+  object-fit:contain;
+  flex:0 0 72px;
+}
+.header-text{
+  display:flex;
+  flex-direction:column;
+  align-items:center; /* centra título y subtítulo respecto al logo */
+}
+.header-text h1{
+  margin:0;
+  font-size:1.8rem;
+  color:var(--accent);
+  line-height:1;
+}
+.header-text .subtitle{
+  margin:4px 0 0 0;
+  color:var(--muted);
+  font-size:0.95rem;
+}
+
+.header-spacer{
+  flex-basis: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.subtitle,
+.subtitle.muted{
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin: 6px 0 0 0;
+}
+
+/* responsive: apilar en móvil */
+@media (max-width:600px){
+  .site-header{flex-direction:column;align-items:center;text-align:center;padding:8px 0}
+  .header-text{align-items:center}
+}
 
 /* Chat (compartido) */
 .chat-card{background:#fff;border:1px solid #e6e6e6;border-radius:8px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,0.04);height:100%;display:flex;flex-direction:column;}
