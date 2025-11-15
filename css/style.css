@@ -158,6 +158,19 @@ body{
 .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:1px solid transparent;text-decoration:none;background:transparent;color:var(--accent);cursor:pointer}
 .btn.primary{background:var(--accent);color:white}
 .btn.small{padding:6px 10px;font-size:0.9rem}
+.btn.big-btn{
+  padding: 14px 22px;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+
+@media (max-width:600px){
+  .actions .btn.big-btn{
+    flex: 1 1 100%;
+    text-align: center;
+  }
+}
+
 .muted{color:var(--muted)}
 .small{font-size:0.85rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
@@ -166,6 +179,12 @@ body{
 .tokens-table{width:100%;border-collapse:collapse}
 .tokens-table th,.tokens-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
 @media (max-width:520px){.actions{flex-direction:column}.card{padding:14px}}
+@media (max-width:600px){
+  .actions .btn.big-btn{
+    flex:1 1 100%;
+    text-align:center;
+  }
+}
 
 /* Header compartido */
 .site-header{
@@ -237,4 +256,54 @@ body{
 .chat-send{padding:8px 12px;border-radius:6px;border:none;background:#0b7cff;color:#fff;cursor:pointer;}
 .chat-muted{font-size:12px;color:#666;margin-top:8px;text-align:center;}
 .loading-dot{display:inline-block;width:8px;height:8px;background:#bbb;border-radius:50%;margin-right:4px;animation:blink 1s infinite;}
-@keyframes blink{0%{opacity:0.2}50%{opacity:1}100%{opacity:0.2}}
+@keyframes blink{0%{opacity:0.2}50%{opacity:1}100%{opacity:0.2}
+
+/* Sidebar fijo del asistente */
+/*#chat-sidebar{
+  position:fixed;
+  top:0;
+  right:0;
+  width:350px;
+  height:100vh;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:saturate(180%) blur(6px);
+  box-shadow:-4px 0 18px rgba(0,0,0,0.08);
+  padding:12px 12px 70px;
+  display:flex;
+  flex-direction:column;
+  z-index:1000;
+  border-left:1px solid var(--border);
+}
+
+#chat-sidebar-content{
+  flex:1;
+  overflow:auto;
+}
+
+/* Ajustar contenido principal para no quedar debajo del sidebar */
+/*.container{
+  margin-right:370px; /* ancho + margen */
+}
+
+/* Responsivo: ocultar sidebar y liberar margen en pantallas pequeñas *//*
+@media (max-width:768px){
+  #chat-sidebar{
+    position:static;
+    width:100%;
+    height:auto;
+    box-shadow:none;
+    border-left:none;
+    margin-top:24px;
+    padding:0;
+  }
+  .container{
+    margin-right:auto;
+  }
+  #chat-sidebar-content{
+    max-height:480px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px;
+    background:#fff;
+  }
+}
