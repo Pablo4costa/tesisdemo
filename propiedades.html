@@ -50,15 +50,64 @@
 .site-logo{width:88px;height:auto;object-fit:contain;}
 .header-text{display:flex;flex-direction:column;}
 .header-title{font-size:24px;margin:0;color:#111;}
-.header-sub{font-size:14px;color:#555;margin:6px 0 0;}
+.header-sub{
+  font-size:19px;        /* antes 14px */
+  font-weight:700;       /* negrita */
+  color:var(--accent);         /* más intenso (puedes usar var(--accent) si prefieres) */
+  margin:6px 0 0;
+}
+
+/* Propiedades header */
+.site-header-Propiedades{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* izquierda */
+  gap:16px;
+  margin-bottom:24px;
+}
+.site-logo-propiedades{
+  width:72px;
+  height:auto;
+  object-fit:contain;
+  flex:0 0 72px;
+}
+.site-header-Propiedades .header-text{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.site-header-Propiedades h1{
+  margin:0;
+  font-size:1.8rem;
+  color:var(--accent);
+}
+.site-header-Propiedades .subtitle{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:0.95rem;
+}
+
+/* user bar más visible y separado del filtro */
+#userBar{
+  font-size: 1rem;      /* más grande que .small */
+  font-weight: 600;     /* resalta el nombre */
+  margin: 8px 0 16px;   /* espacio por debajo */
+}
 </style>
 </head>
 <body>
 <main class="container">
-<header class="site-header">
-  <img src="img/logo.png" alt="Housegur" class="site-logo">
+
+<header class="site-header-Propiedades">
+  <img src="img/logoChiquito.png" alt="Housegur" class="site-logo-propiedades">
   <div class="header-text">
-    <h1 class="header-title">Propiedades Tokenizadas</h1>
+    <h1>HOUSEGUR</h1>
+    <p class="subtitle muted">Plataforma de inversión tokenizada</p>
+  </div>
+</header>
+
+<header class="site-header">
+  <div class="header-text">
     <p class="header-sub">Invierte en fracciones de propiedades premium desde 100€. Tu asesor personal te guiará en cada paso.</p>
   </div>
 </header>
@@ -90,8 +139,8 @@
     <section id="grid" class="grid" aria-live="polite"></section>
 
         <div class="actions" style="margin-top:12px;">
-          <button id="btnMisTokens" class="btn">Ver mis tokens</button>
-          <a class="btn" href="index.html">Volver</a>
+          <button id="btnMisTokens" class="btn big-btn">Ver mis tokens</button>
+          <a class="btn big-btn" href="index.html">Volver</a>
         </div>
 
         <footer class="muted small" style="margin-top:10px;">Datos servidos por la API de Housegur</footer>
@@ -280,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userBar = document.getElementById('userBar');
   if (userBar) {
     if (usuario_id && nombre) {
-      userBar.innerHTML = `👤 <strong>${escapeHtml(nombre)}</strong> (ID: ${usuario_id})`;
+      userBar.innerHTML = `Buenos Dias 👤 <strong>${escapeHtml(nombre)}</strong> (ID: ${usuario_id})`;
       console.log('[PROPIEDADES] User loaded from localStorage:', nombre);
     } else {
       userBar.innerHTML = '👤 Visitante (sin login)';
