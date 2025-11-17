@@ -5,24 +5,95 @@
   <title>Detalle propiedad - Housegur</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
-.prop-detail{max-width:720px;margin:18px auto;}
-.prop-main{width:100%;height:360px;object-fit:cover;border-radius:8px;display:block;}
-.prop-thumbs{display:flex;gap:8px;margin-top:8px;overflow-x:auto;}
-.prop-thumb{width:72px;height:54px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:0.85;border:2px solid transparent;flex:0 0 auto;}
-.prop-thumb.active{opacity:1;border-color:#007bff;}
-.carousel-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);color:#fff;border-radius:4px;padding:6px 8px;cursor:pointer;font-weight:700;}
-.carousel-prev{left:12px;}
-.carousel-next{right:12px;}
-.media-wrap{position:relative;}
-.controls-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+    .prop-detail{max-width:980px;margin:18px auto;} /* antes 720px */
+    .prop-main{
+      width:100%;
+      height:clamp(360px, 50vh, 520px); /* más grande y responsivo */
+      object-fit:cover;border-radius:8px;display:block;
+    }
+    .prop-thumbs{display:flex;gap:10px;margin-top:10px;overflow-x:auto;}
+    .prop-thumb{width:96px;height:72px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:0.9;border:2px solid transparent;flex:0 0 auto;}
+    .prop-thumb.active{opacity:1;border-color:#007bff;}
+    .carousel-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);color:#fff;border-radius:4px;padding:6px 8px;cursor:pointer;font-weight:700;}
+    .carousel-prev{left:12px;}
+    .carousel-next{right:12px;}
+    .media-wrap{position:relative;}
+    .controls-row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+
+    /* Mantener la misma proporción que en propiedades: left + aside 360 + gap 18 dentro de 980 */
+    .detail-left{flex:1;max-width:calc(980px - 360px - 18px);}
+    @media (max-width:980px){
+      .detail-left{max-width:100%;}
+      .prop-main{height:clamp(280px, 42vh, 420px);}
+      .prop-thumb{width:84px;height:64px;}
+    }
+
+    /* NUEVO: descripción y tabla compacta */
+    .prop-about{margin-top:16px;}
+    .prop-about h3{margin:12px 0 8px;color:var(--accent);}
+    .small-info{width:100%;max-width:520px;border-collapse:collapse;border-spacing:0;}
+    .small-info th,.small-info td{padding:8px 10px;border-bottom:1px solid #e6e6e6;text-align:left;}
+    .small-info th{width:45%;color:#374151;font-weight:600;background:#f9fafb;}
+    .small-info td{color:#111;}
+
+    /* nuevo: header con logo y textos */
+.site-header{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+.site-logo{width:88px;height:auto;object-fit:contain;}
+.header-text{display:flex;flex-direction:column;}
+.header-title{font-size:24px;margin:0;color:#111;}
+.header-sub{
+  font-size:19px;        /* antes 14px */
+  font-weight:700;       /* negrita */
+  color:var(--accent);         /* más intenso (puedes usar var(--accent) si prefieres) */
+  margin:6px 0 0;
+}
+
+/* Propiedades header */
+.site-header-Propiedades{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* izquierda */
+  gap:16px;
+  margin-bottom:24px;
+}
+.site-logo-propiedades{
+  width:72px;
+  height:auto;
+  object-fit:contain;
+  flex:0 0 72px;
+}
+.site-header-Propiedades .header-text{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.site-header-Propiedades h1{
+  margin:0;
+  font-size:1.8rem;
+  color:var(--accent);
+}
+.site-header-Propiedades .subtitle{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:0.95rem;
+}
   </style>
 </head>
 <body>
 <main class="container prop-detail">
+
+  <header class="site-header-Propiedades">
+  <img src="img/logoChiquito.png" alt="Housegur" class="site-logo-propiedades">
+  <div class="header-text">
+    <h1>HOUSEGUR</h1>
+    <p class="subtitle muted">Plataforma de inversión tokenizada</p>
+  </div>
+</header>
+
   <a class="btn" href="propiedades.html">← Volver al listado</a>
 
   <div style="display:flex;gap:18px;align-items:flex-start;">
-    <div style="flex:1;">
+    <div class="detail-left">
       <div id="detalle"></div>
     </div>
     <aside style="width:360px;flex:0 0 360px;position:sticky;top:18px;" id="chatAside">
@@ -61,6 +132,27 @@ async function renderDetalle(){
       : (prop.url ? [prop.url] : ['img/placeholder.png']);
     const pricePerToken = Number(prop.precio_token ?? prop.precio ?? 0);
     const rentObj = prop.rentabilidad_objetivo ?? prop.rentabilidad ?? '';
+
+    // NUEVO: datos para la descripción y tabla
+    const pick = (obj, ...keys) => {
+      for (const k of keys) {
+        if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
+      }
+      return '';
+    };
+    const yn = (v) => {
+      if (v === '' || v === null || v === undefined) return '-';
+      const s = String(v).toLowerCase();
+      return (s === 'false' || s === 'no' || s === '0' || v === 0) ? 'No' : 'Sí';
+    };
+
+    const desc = pick(prop, 'descripcion','descripcion_larga','descripcion_corta','descripción','descripción_larga') || 'Sin descripción disponible.';
+    const superficie = pick(prop, 'm2','superficie','superficie_m2');
+    const habitaciones = pick(prop, 'habitaciones','dormitorios','rooms');
+    const banos = pick(prop, 'banos','baños','bathrooms');
+    const terrazaVal = pick(prop, 'terraza','tiene_terraza','con_terraza');
+    const piscinaVal = pick(prop, 'piscina','tiene_piscina','con_piscina');
+
     detalle.innerHTML = `
       <h2>${escapeHtml(prop.titulo || 'Propiedad')}</h2>
       <p class="muted">${escapeHtml(prop.ciudad || '')} • ${escapeHtml(prop.tipo || '')} • ${prop.m2 || ''} m²</p>
@@ -77,6 +169,36 @@ async function renderDetalle(){
         <label><input type="checkbox" id="autoplay" checked> Autoplay</label>
       </div>
       <p style="margin-top:12px;">Rentabilidad objetivo: <strong>${rentObj}</strong></p>
+
+      <!-- NUEVO: Descripción + tabla de datos -->
+      <section class="prop-about">
+        <h3>Descripción</h3>
+        <p>${escapeHtml(desc).replace(/\n/g,'<br>')}</p>
+        <table class="small-info" aria-label="Información de la propiedad">
+          <tbody>
+            <tr>
+              <th scope="row">Superficie</th>
+              <td>${superficie ? `${superficie} m²` : '-'}</td>
+            </tr>
+            <tr>
+              <th scope="row">Habitaciones</th>
+              <td>${habitaciones || '-'}</td>
+            </tr>
+            <tr>
+              <th scope="row">Baños</th>
+              <td>${banos || '-'}</td>
+            </tr>
+            <tr>
+              <th scope="row">Terraza</th>
+              <td>${yn(terrazaVal)}</td>
+            </tr>
+            <tr>
+              <th scope="row">Piscina</th>
+              <td>${yn(piscinaVal)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     `;
 
     // behavior carousel
