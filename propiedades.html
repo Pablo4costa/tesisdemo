@@ -93,6 +93,46 @@
   font-weight: 600;     /* resalta el nombre */
   margin: 8px 0 16px;   /* espacio por debajo */
 }
+
+/* Toolbar: usuario + acciones a la derecha */
+.user-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin: 8px 0 16px; /* separación del header y del filtro */
+}
+
+/* Reutiliza estilos previos del userBar, pero sin margen interno cuando está en toolbar */
+.user-toolbar #userBar{
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0; /* sin margen para alinear con los botones */
+}
+
+/* Acciones del usuario en la derecha */
+.actions.actions-user{
+  display:flex;
+  gap:10px;
+  margin:0;
+}
+
+/* Responsivo: apilar en pantallas pequeñas */
+@media (max-width: 768px){
+  .user-toolbar{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .actions.actions-user{
+    width:100%;
+    flex-wrap:wrap;
+  }
+  .actions.actions-user .btn{
+    flex:1 1 auto;
+    text-align:center;
+  }
+}
 </style>
 </head>
 <body>
@@ -112,7 +152,14 @@
   </div>
 </header>
 
-<div id="userBar" class="muted small"></div>
+<!-- toolbar usuario + botones -->
+<div class="user-toolbar">
+  <div id="userBar" class="muted"></div>
+  <div class="actions actions-user">
+    <button id="btnMisTokens" class="btn big-btn">Ver mis tokens</button>
+    <a class="btn big-btn" href="index.html">Volver</a>
+  </div>
+</div>
 
 <div class="page-split">
   <!-- columna izquierda: filtros + listado -->
@@ -138,12 +185,7 @@
 
     <section id="grid" class="grid" aria-live="polite"></section>
 
-        <div class="actions" style="margin-top:12px;">
-          <button id="btnMisTokens" class="btn big-btn">Ver mis tokens</button>
-          <a class="btn big-btn" href="index.html">Volver</a>
-        </div>
-
-        <footer class="muted small" style="margin-top:10px;">Datos servidos por la API de Housegur</footer>
+    <footer class="muted small" style="margin-top:10px;">Datos servidos por la API de Housegur</footer>
   </div>
 
   <!-- columna derecha: asistente virtual -->
