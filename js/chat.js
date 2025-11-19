@@ -149,7 +149,7 @@
         }
 
         const data = await resp.json();
-        const respuesta = data.respuesta || data.reply || data.message || 'Sin respuesta';
+        const respuesta = data.respuesta || data.output || data.reply || data.message || 'Sin respuesta';
         addMessage('assistant', respuesta);
 
         if (data.accion_detectada && !isConfirmation) {
