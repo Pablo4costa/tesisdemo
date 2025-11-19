@@ -60,6 +60,15 @@ document.getElementById('btnIngresar').addEventListener('click', async () => {
       mensajeDiv.textContent = '✅ Acceso permitido. Redirigiendo...';
       console.log('[LOGIN] Login successful, redirecting to propiedades.html');
       
+      // Guardar sesión en localStorage
+      const session = {
+        usuario_id: response.usuario_id,
+        nombre: response.nombre,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('housegur_session', JSON.stringify(session));
+      console.log('[LOGIN] Session saved:', session);
+      
       // Redirect to properties page after brief delay
       setTimeout(() => {
         window.location.href = 'propiedades.html';
