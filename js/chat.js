@@ -152,6 +152,40 @@
         const respuesta = data.respuesta || data.output || data.reply || data.message || 'Sin respuesta';
         addMessage('assistant', respuesta);
 
+        // Navegación conversacional: interpreta comandos de navegación desde n8n
+        if (data.navegacion) {
+          const nav = data.navegacion;
+          console.log('[CHAT-NAV] Comando detectado:', nav.comando, 'Parámetros:', nav.parametros);
+
+          if (nav.comando === 'ver_propiedades' && nav.parametros?.filtros) {
+            console.log('[CHAT-NAV] Ejecutando navigateToProperties con filtros:', nav.parametros.filtros);
+            if (typeof window.navigateToProperties === 'function') {
+              window.navigateToProperties(nav.parametros.filtros);
+            }
+          }
+
+          if (nav.comando === 'ver_propiedad' && nav.parametros?.id) {
+            console.log('[CHAT-NAV] Ejecutando navigateToPropertyDetail para propiedad:', nav.parametros.id);
+            if (typeof window.navigateToPropertyDetail === 'function') {
+              window.navigateToPropertyDetail(nav.parametros.id);
+            }
+          }
+
+          if (nav.comando === 'ver_portafolio') {
+            console.log('[CHAT-NAV] Ejecutando navigateToHoldings');
+            if (typeof window.navigateToHoldings === 'function') {
+              window.navigateToHoldings();
+            }
+          }
+
+          if (nav.comando === 'navegar' && nav.parametros?.ruta) {
+            console.log('[CHAT-NAV] Ejecutando navigateTo para ruta:', nav.parametros.ruta);
+            if (typeof window.navigateTo === 'function') {
+              window.navigateTo(nav.parametros.ruta);
+            }
+          }
+        }
+
         if (data.accion_detectada && !isConfirmation) {
           showActionPanel(data.accion_detectada);
         } else {
