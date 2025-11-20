@@ -233,6 +233,15 @@ function saveFilters(){
 }
 
 function loadFilters(){
+  // PRIORITY 1: Check URL params first (from chat navigation)
+  const urlCiudad = getParam('ciudad');
+  if (urlCiudad) {
+    filterCiudad.value = urlCiudad;
+    console.log('[PROPIEDADES] Loaded ciudad from URL param:', urlCiudad);
+    return;
+  }
+
+  // PRIORITY 2: Load from localStorage (if no URL param)
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
