@@ -1,0 +1,442 @@
+================================================================================
+DOCUMENTACIÓN TÉCNICA - FRONTEND HOUSEGUR
+Proyecto: Plataforma de Inversión Inmobiliaria Tokenizada
+Fecha: Noviembre 2025
+================================================================================
+
+1. ARQUITECTURA DEL FRONTEND
+================================================================================
+
+ESTRUCTURA DE CARPETAS:
+- index.html: Landing page
+- login.html: Autenticación
+- propiedades.html: Listado de propiedades (componente principal)
+- detalle.html: Página de detalle de propiedad
+- mis-tokens.html: Portafolio del usuario
+- confirm.html: Confirmación de transacciones
+- css/style.css: Estilos únificados
+- js/app.js: Funciones auxiliares (getParam, escapeHtml, redirectWith)
+- js/config.js: Configuración centralizada (API_BASE, CHAT_WEBHOOK)
+- js/api.js: 5 funciones API (loginUser, getProperties, getHoldings, buyTokens, sellTokens)
+- js/chat.js: Módulo de chat conversacional con n8n
+- js/navigation.js: 4 funciones de navegación desde n8n
+- partials/chat.html: Widget HTML del chat
+
+PÁGINAS Y RUTAS:
+1. index.html → Landing page
+2. login.html → Autenticación (POST /auth/login) → propiedades.html
+3. propiedades.html → Listado con filtros (GET /properties)
+   - Parámetro URL: ?ciudad=Madrid
+   - Chat incluido en sidebar
+4. detalle.html?propiedad={id} → Detalle de propiedad (carrusel + info)
+   - Chat incluido en sidebar
+5. mis-tokens.html → Portafolio (GET /holdings?user_id={id})
+6. confirm.html?action=buy&property_id={id} → Transacción
+
+COMPONENTES PRINCIPALES:
+- Grid de propiedades: renderizado dinámico desde API
+- Carrusel de imágenes: en detalle.html
+- Chat conversacional: IIFE module, privado, inicializado en propiedades.html y detalle.html
+- Filtros: ciudad, precio_min, precio_max, sort
+
+
+2. CÓMO SE RENDERIZAN LAS PROPIEDADES
+================================================================================
+
+FLUJO EN propiedades.html:
+
+1. DOMContentLoaded → getProperties() desde API
+2. Resultado guardado en variable global: propiedadesActuales = []
+3. populateCiudadOptions() → llena dropdown con ciudades únicas
+4. loadFilters() → carga filtros:
+   - PRIORITY 1: URL param ?ciudad= (si existe, usa este)
+   - PRIORITY 2: localStorage (si no hay URL param)
+5. applyFiltersAndRender() → filtra array y renderiza
+6. renderList(list) → crea DOM elements para cada propiedad
+
+CAMPOS MAPEADOS DE API:
+- precio_token (o fallback: precio)
+- total_tokens (o fallback: tokens_total)
+- tokens_disponibles
+- fotos (array) o url (string)
+- titulo, ciudad, tipo, m2, rentabilidad_objetivo
+
+RENDERIZADO POR PROPIEDAD:
+<article class="card prop">
+  <img> (foto)
+  <h3> (título)
+  <p> (ciudad • tipo • m²)
+  <p> Precio por token: {precio_token} EUR
+  <progress bar> (% vendidos)
+  <p> {% vendidos} — {tokens_disponibles} tokens disponibles
+  <button> Ver detalle
+  <button> Comprar tokens
+  <button> Preguntar sobre esta
+</article>
+
+EVENTOS EN PROPIEDADES:
+- Click "Ver detalle" → window.location.href = "detalle.html?propiedad={id}"
+- Click "Comprar" → window.location.href = "confirm.html?action=buy&..."
+- Click "Preguntar" → chat.sendMessage("Detalles de propiedad X...")
+
+
+3. CÓMO FUNCIONA EL CHAT CONVERSACIONAL
+================================================================================
+
+UBICACIÓN: js/chat.js (261 líneas)
+PATRÓN: IIFE (Immediately Invoked Function Expression)
+
+INICIALIZACIÓN:
+1. propiedades.html y detalle.html cargan: <script src="js/chat.js"></script>
+2. Llaman a: initGlobalChat('globalChatContainer', { user, props, webhookUrl })
+3. Chat se renderiza en <aside id="chatAside">
+
+SESIÓN DEL USUARIO:
+- Lectura desde localStorage.housegur_session (creada en login.html)
+- Estructura: { usuario_id, nombre, timestamp }
+- Si no existe sesión: muestra "Por favor inicia sesión"
+
+HISTORIAL DE CHAT:
+- Persistencia en localStorage.housegur.chat.history.{usuario_id}
+- Array de objetos: [{ role: "user"|"assistant", content: "..." }, ...]
+- Se carga y renderiza cada vez que se abre el chat
+
+INTERFAZ VISUAL:
+- Avatar "AV" (Asistente Virtual)
+- Bubbles: azul para usuario, gris para asistente
+- Input text + botón "Enviar"
+- Panel de confirmación (opcional, mostrado si n8n envía accion_detectada)
+
+
+4. DÓNDE SE GENERA EL PAYLOAD PARA n8n
+================================================================================
+
+FUNCIÓN: sendMessage(text, isConfirmation) en js/chat.js
+
+PAYLOAD JSON ENVIADO A n8n:
+
+{
+  "usuario_id": 40,
+  "nombre_usuario": "Juan",
+  "mensaje": "¿propiedades en Madrid?",
+  "historial": [
+    { "role": "user", "content": "Hola" },
+    { "role": "assistant", "content": "Bienvenido" },
+    { "role": "user", "content": "¿propiedades en Madrid?" }
+  ],
+  "confirmacion": false,
+  "accion_confirmada": null
+}
+
+WEBHOOK URL: https://palasino.app.n8n.cloud/webhook/housegur-chat (desde CONFIG)
+
+RESPUESTA ESPERADA DE n8n:
+
+{
+  "respuesta": "Aquí tienes las propiedades en Madrid...",
+  "navegacion": {
+    "comando": "ver_propiedades",
+    "parametros": {
+      "filtros": {
+        "ciudad": "Madrid"
+      }
+    }
+  },
+  "accion_detectada": null
+}
+
+CAMPOS ESPERADOS:
+- respuesta (string): respuesta conversacional del asistente
+- navegacion (object|null): comandos de navegación (opcional)
+- accion_detectada (object|null): acciones que requieren confirmación (opcional)
+
+FALLBACKS PARA RESPUESTA:
+respuesta || output || reply || message || 'Sin respuesta'
+
+
+5. FUNCIONES DE NAVEGACIÓN
+================================================================================
+
+MÓDULO: js/navigation.js (4 funciones globales)
+
+CARGA: Debe estar ANTES de js/chat.js en el HTML
+
+FUNCIÓN 1: window.navigateToProperties(filtros)
+- Comando n8n: "ver_propiedades"
+- Parámetros: filtros = { ciudad, precio_min, precio_max, sort }
+- Acción: window.location.href = "propiedades.html?ciudad=...&precio_min=..."
+
+FUNCIÓN 2: window.navigateToPropertyDetail(id)
+- Comando n8n: "ver_propiedad"
+- Parámetros: id (número, ID de propiedad)
+- Acción: window.location.href = "detalle.html?propiedad={id}"
+
+FUNCIÓN 3: window.navigateToHoldings()
+- Comando n8n: "ver_portafolio"
+- Parámetros: ninguno
+- Acción: window.location.href = "mis-tokens.html"
+
+FUNCIÓN 4: window.navigateTo(ruta)
+- Comando n8n: "navegar"
+- Parámetros: ruta (string, ej: "index.html")
+- Acción: window.location.href = ruta
+
+VALIDACIÓN DEFENSIVA:
+- Se verifica que la función exista: typeof window.navigateToProperties === 'function'
+- Se usa optional chaining para parámetros: nav.parametros?.filtros
+
+
+6. FLUJO DEL CHAT (PASO A PASO)
+================================================================================
+
+1. Usuario escribe mensaje y presiona Enter o click "Enviar"
+2. sendMessage(text) es llamada
+3. Mensaje del usuario se agrega a chatHistory
+4. Mensaje se renderiza en UI
+5. Se muestra placeholder "⏳ Procesando..."
+6. Se construye payload JSON con usuario_id, nombre, mensaje, historial completo
+7. POST payload a WEBHOOK n8n
+8. n8n procesa (consulta base datos, LLM, etc.)
+9. n8n retorna JSON con respuesta + navegacion (opcional)
+10. JavaScript recibe respuesta:
+    a. Extrae field "respuesta" (con fallbacks: output, reply, message)
+    b. Agrega respuesta al chatHistory
+    c. Renderiza en UI
+11. SI hay data.navegacion:
+    a. Valida estructura: comando y parametros
+    b. Llama función de navegación correspondiente (navigate*)
+    c. Página se redirige
+12. SI hay data.accion_detectada:
+    a. Muestra panel de confirmación con descripción de acción
+    b. Si usuario confirma: reenvía mensaje con confirmacion: true
+    c. Si usuario cancela: oculta panel
+13. Historial se persiste en localStorage automáticamente
+
+
+7. PROCESAMIENTO DE RESPUESTAS
+================================================================================
+
+EXTRACCIÓN DE RESPUESTA:
+const respuesta = data.respuesta || data.output || data.reply || data.message || 'Sin respuesta';
+addMessage('assistant', respuesta);
+
+INTERPRETACIÓN DE NAVEGACION:
+if (data.navegacion) {
+  const nav = data.navegacion;
+  
+  if (nav.comando === 'ver_propiedades' && nav.parametros?.filtros) {
+    window.navigateToProperties(nav.parametros.filtros);
+  }
+  if (nav.comando === 'ver_propiedad' && nav.parametros?.id) {
+    window.navigateToPropertyDetail(nav.parametros.id);
+  }
+  if (nav.comando === 'ver_portafolio') {
+    window.navigateToHoldings();
+  }
+  if (nav.comando === 'navegar' && nav.parametros?.ruta) {
+    window.navigateTo(nav.parametros.ruta);
+  }
+}
+
+INTERPRETACIÓN DE ACCIÓN:
+if (data.accion_detectada && !isConfirmation) {
+  showActionPanel(data.accion_detectada);
+  // Muestra botones "Sí, confirmar" y "Cancelar"
+}
+
+
+8. VARIABLES GLOBALES Y ESTADO DEL USUARIO
+================================================================================
+
+localStorage KEYS:
+
+1. housegur_session
+   Tipo: JSON
+   Estructura: { usuario_id, nombre, timestamp }
+   Cuándo: Creado en login.html después de POST /auth/login exitoso
+   Lectura: getSession() en js/chat.js
+   Persistencia: Entre recargas de página
+
+2. usuario_id, nombre (campos individuales)
+   Tipo: string
+   Cuándo: Guardados por loginUser() en js/api.js
+   Lectura: localStorage.getItem('usuario_id') en cualquier página
+   Uso: Mostrar usuario en UI
+
+3. housegur.chat.history.{usuario_id}
+   Tipo: JSON array
+   Estructura: [{ role: "user"|"assistant", content: "..." }, ...]
+   Cuándo: Se crea después de primer mensaje en chat
+   Lectura: loadHistory() en js/chat.js
+   Persistencia: Sin límite de tamaño (puede crecer indefinidamente)
+
+4. propiedades.filters
+   Tipo: JSON
+   Estructura: { ciudad, min, max, sort }
+   Cuándo: Guardado al cambiar filtros en propiedades.html
+   Lectura: loadFilters() en propiedades.html
+   Priority: SOBRESCRITO por URL params (?ciudad=)
+
+VARIABLES GLOBALES EN window:
+
+CONFIG: { API_BASE, CHAT_WEBHOOK }
+loginUser(), getProperties(), getHoldings(), buyTokens(), sellTokens()
+navigateToProperties(), navigateToPropertyDetail(), navigateToHoldings(), navigateTo()
+initGlobalChat(), __housegur_chat
+getParam(), escapeHtml(), redirectWith()
+
+VARIABLES LOCALES EN PÁGINAS:
+
+propiedades.html:
+- propiedadesActuales = [] (propiedades desde API)
+- STORAGE_KEY = 'propiedades.filters'
+
+detalle.html:
+- window.propiedadesLoaded = [] (para acceso desde chat)
+
+
+9. ENDPOINTS DE API
+================================================================================
+
+POST /auth/login
+Request: { nombre, email }
+Response: { status: "ok", usuario_id, nombre }
+Efecto: Guarda usuario_id y nombre en localStorage
+
+GET /properties
+Request: (sin parámetros)
+Response: [{ id, titulo, ciudad, tipo, m2, precio_token, total_tokens, tokens_disponibles, fotos, ... }]
+Uso: propiedades.html, detalle.html
+
+GET /holdings?user_id={id}
+Request: (parámetro en URL)
+Response: [{ propiedad_id, titulo, tokens_owned, precio_token, valor_actual, ... }]
+Uso: mis-tokens.html
+
+POST /transactions/buy
+Request: { user_id, property_id, tokens, precio_unitario }
+Response: { status: "ok", transaction_id, ... }
+Uso: confirm.html
+
+POST /transactions/sell
+Request: { user_id, property_id, tokens, precio_unitario }
+Response: { status: "ok", transaction_id, ... }
+Uso: confirm.html
+
+
+10. MAPEO DEFENSIVO DE CAMPOS
+================================================================================
+
+El frontend tolera variaciones en nombres de campos (nullish coalescing):
+
+precio_token ?? precio → Precio por token
+total_tokens ?? tokens_total → Total de tokens disponibles
+tokens_disponibles → Tokens sin vender
+tokens_owned ?? tokens ?? cantidad_tokens → Tokens propiedad del usuario
+valor_actual ?? (tokens × precio) → Valor total de holdings
+fotos ?? url → Imágenes (array o string)
+titulo → Nombre de propiedad
+rentabilidad_objetivo ?? rentabilidad → Porcentaje de rentabilidad
+fecha_creacion ?? fecha → Fecha de creación
+
+
+11. FLUJOS COMPLETOS
+================================================================================
+
+FLUJO DE AUTENTICACIÓN:
+1. Usuario abre login.html
+2. Ingresa nombre y email
+3. JavaScript valida (no vacío)
+4. POST /auth/login
+5. Recibe { status: "ok", usuario_id, nombre }
+6. Guarda en localStorage
+7. Guarda en localStorage.housegur_session (JSON)
+8. Redirige a propiedades.html
+9. propiedades.html detea usuario en localStorage
+10. Chat se inicializa con historial guardado
+
+FLUJO DE PROPIEDADES:
+1. propiedades.html carga
+2. getProperties() → GET /properties
+3. Renderiza grid de propiedades
+4. Usuario puede filtrar por ciudad, precio, orden
+5. Filtros se guardan en localStorage
+6. URL params sobreescriben filtros guardados
+7. Click en propiedad → detalle.html?propiedad={id}
+
+FLUJO DE COMPRA:
+1. Usuario click "Comprar tokens"
+2. Redirige a confirm.html?action=buy&property_id={id}&price_per_token=...
+3. Muestra resumen y input para cantidad
+4. Usuario ingresa cantidad
+5. Click "Confirmar"
+6. POST /transactions/buy
+7. Éxito: muestra ✅, redirige a mis-tokens.html
+
+
+12. LIMITACIONES ACTUALES
+================================================================================
+
+SEGURIDAD:
+- localStorage sin encriptación (XSS vulnerable)
+- No hay validación de contraseña (solo nombre + email)
+- No hay invalidación por inactividad
+- No hay protección CSRF
+
+FUNCIONALIDAD:
+- Historial de chat crece indefinidamente
+- Sin notificaciones en tiempo real
+- Sin sincronización entre pestañas
+- Sin caché de API
+
+RENDIMIENTO:
+- Se carga TODOS las propiedades sin paginación
+- Renderiza todos los DOM nodes simultáneamente
+- Sin lazy loading de imágenes
+- Sin service workers
+
+UX/UI:
+- Sin loading indicators globales
+- Validación de formularios limitada
+- Chat sin "typing..." indicator
+- Responsive design limitado
+
+ACCESIBILIDAD:
+- ARIA incompleto
+- Sin soporte para lectores de pantalla
+- Contraste insuficiente en algunos textos
+- Navegación por teclado limitada
+
+
+13. TECNOLOGÍAS USADAS
+================================================================================
+
+LENGUAJES:
+- JavaScript ES6+ (vanilla, sin frameworks)
+- HTML5
+- CSS3
+
+APIS NATIVAS:
+- Fetch API (para HTTP)
+- localStorage API (para persistencia)
+- URLSearchParams (para query params)
+- DOM API (para manipulación)
+
+PATRONES:
+- IIFE (Immediately Invoked Function Expression)
+- Nullish coalescing (??)
+- Optional chaining (?.)
+- Try/catch para error handling
+
+LIBRERÍAS: NINGUNA (frontend completamente vanilla)
+
+COMPATIBILIDAD:
+- Chrome 51+
+- Firefox 54+
+- Safari 11+
+- Edge 15+
+
+
+================================================================================
+FIN DE DOCUMENTACIÓN
+================================================================================
