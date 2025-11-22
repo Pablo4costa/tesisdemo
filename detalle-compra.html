@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Detalle de Compra - Housegur</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+/* Layout: resumen + formulario */
+.compra-split{
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+  max-width:980px;
+  margin:0 auto;
+}
+.compra-resumen{
+  flex:1;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  box-shadow:0 4px 18px rgba(15,23,42,0.04);
+}
+.compra-form{
+  width:420px;
+  flex:0 0 420px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  box-shadow:0 4px 18px rgba(15,23,42,0.04);
+}
+
+.compra-resumen h2,
+.compra-form h2{
+  margin:0 0 16px;
+  color:var(--accent);
+  font-size:1.5rem;
+}
+
+.resumen-item{
+  display:flex;
+  justify-content:space-between;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.resumen-item:last-child{
+  border-bottom:none;
+}
+.resumen-label{
+  color:var(--muted);
+  font-weight:500;
+}
+.resumen-value{
+  color:#111;
+  font-weight:600;
+}
+.resumen-total{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:2px solid var(--accent);
+  display:flex;
+  justify-content:space-between;
+  font-size:1.25rem;
+  font-weight:700;
+  color:var(--accent);
+}
+
+/* Propiedad destacada */
+.prop-destacada{
+  margin-bottom:20px;
+  border-radius:8px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.prop-destacada img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  display:block;
+}
+.prop-destacada-info{
+  padding:12px;
+  background:#f9fafb;
+}
+.prop-destacada-info h3{
+  margin:0 0 6px;
+  font-size:1.1rem;
+  color:#111;
+}
+.prop-destacada-info p{
+  margin:0;
+  color:var(--muted);
+  font-size:0.9rem;
+}
+
+/* Formulario de pago */
+.form-group{
+  margin-bottom:16px;
+}
+.form-group label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:600;
+  color:#374151;
+  font-size:14px;
+}
+.form-group input{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  font-size:14px;
+  box-sizing:border-box;
+}
+.form-group input:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(31,79,122,0.1);
+}
+.form-row{
+  display:flex;
+  gap:12px;
+}
+.form-row .form-group{
+  flex:1;
+}
+
+.btn-pagar{
+  width:100%;
+  padding:14px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:1rem;
+  font-weight:600;
+  cursor:pointer;
+  margin-top:8px;
+  transition:background 0.2s;
+}
+.btn-pagar:hover{
+  background:var(--accent-2);
+}
+.btn-pagar:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
+.seguridad-nota{
+  margin-top:12px;
+  padding:12px;
+  background:#f0f9ff;
+  border-left:3px solid var(--accent);
+  font-size:13px;
+  color:#374151;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.btn-cancelar{
+  display:block;
+  text-align:center;
+  margin-top:12px;
+  padding:10px;
+  color:var(--muted);
+  text-decoration:none;
+  border-radius:8px;
+  transition:background 0.2s;
+}
+.btn-cancelar:hover{
+  background:#f3f4f6;
+}
+
+/* Responsive */
+@media (max-width:980px){
+  .compra-split{
+    flex-direction:column;
+  }
+  .compra-form{
+    width:100%;
+  }
+}
+
+/* Header compartido */
+.site-header-Propiedades{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:16px;
+  margin-bottom:24px;
+}
+.site-logo-propiedades{
+  width:72px;
+  height:auto;
+  object-fit:contain;
+  flex:0 0 72px;
+}
+.site-header-Propiedades .header-text{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.site-header-Propiedades h1{
+  margin:0;
+  font-size:1.8rem;
+  color:var(--accent);
+}
+.site-header-Propiedades .subtitle{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:0.95rem;
+}
+
+/* Badge de origen */
+.badge-chat{
+  display:inline-block;
+  background:#e0f2fe;
+  color:#0369a1;
+  padding:4px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:600;
+  margin-bottom:12px;
+}
+</style>
+</head>
+<body>
+<main class="container">
+  <header class="site-header-Propiedades">
+    <img src="img/logoChiquito.png" alt="Housegur" class="site-logo-propiedades">
+    <div class="header-text">
+      <h1>HOUSEGUR</h1>
+      <p class="subtitle muted">Plataforma de inversión tokenizada</p>
+    </div>
+  </header>
+
+  <div id="badge-container"></div>
+
+  <div class="compra-split">
+    <!-- Resumen de la compra -->
+    <div class="compra-resumen">
+      <h2>Resumen de tu compra</h2>
+      
+      <!-- Propiedad destacada -->
+      <div class="prop-destacada" id="prop-destacada">
+        <img src="img/placeholder.png" alt="Propiedad" id="prop-imagen">
+        <div class="prop-destacada-info">
+          <h3 id="prop-titulo">Cargando...</h3>
+          <p id="prop-ubicacion">-</p>
+        </div>
+      </div>
+
+      <div id="resumen-contenido">
+        <div class="resumen-item">
+          <span class="resumen-label">Cantidad de tokens:</span>
+          <span class="resumen-value" id="cantidad-tokens">0</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-label">Precio por token:</span>
+          <span class="resumen-value" id="precio-token">0 EUR</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-label">Subtotal:</span>
+          <span class="resumen-value" id="subtotal">0 EUR</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-label">Comisión de plataforma (2%):</span>
+          <span class="resumen-value" id="comision">0 EUR</span>
+        </div>
+        <div class="resumen-total">
+          <span>Total a pagar:</span>
+          <span id="total-pagar">0 EUR</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de pago -->
+    <div class="compra-form">
+      <h2>Datos de pago</h2>
+      <form id="form-pago">
+        <div class="form-group">
+          <label for="nombre-tarjeta">Nombre en la tarjeta *</label>
+          <input type="text" id="nombre-tarjeta" placeholder="Juan Pérez" value="Juan Pérez Test" required autocomplete="cc-name">
+        </div>
+        
+        <div class="form-group">
+          <label for="numero-tarjeta">Número de tarjeta *</label>
+          <input type="text" id="numero-tarjeta" placeholder="1234 5678 9012 3456" value="4532 1488 0343 6467" maxlength="19" required autocomplete="cc-number">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fecha-expiracion">Expiración *</label>
+            <input type="text" id="fecha-expiracion" placeholder="MM/AA" value="12/25" maxlength="5" required autocomplete="cc-exp">
+          </div>
+          <div class="form-group">
+            <label for="cvv">CVV *</label>
+            <input type="text" id="cvv" placeholder="123" value="123" maxlength="4" required autocomplete="cc-csc">
+          </div>
+        </div>
+
+        <div class="seguridad-nota">
+          <span>🔒</span>
+          <span>Tu información está protegida con encriptación SSL de 256 bits</span>
+        </div>
+
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center;">
+          ℹ️ Datos de prueba precargados - Tarjeta Visa válida para testing
+        </p>
+
+        <button type="submit" class="btn-pagar" id="btn-pagar">
+          Confirmar compra
+        </button>
+        <a href="propiedades.html" class="btn-cancelar">Cancelar y volver</a>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+// Utilidades
+function getParam(name) {
+  const params = new URLSearchParams(window.location.search);
+  return params.get(name);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Cargar datos de la compra
+document.addEventListener('DOMContentLoaded', async () => {
+  const propId = getParam('propiedad');
+  const cantidad = parseInt(getParam('cantidad') || '0', 10);
+
+  // Verificar si viene desde chat
+  const desdeChat = sessionStorage.getItem('compra-desde-chat');
+  if (desdeChat) {
+    const badgeContainer = document.getElementById('badge-container');
+    badgeContainer.innerHTML = '<span class="badge-chat">✨ Compra iniciada desde el asistente virtual</span>';
+    console.log('Compra desde chat:', JSON.parse(desdeChat));
+  }
+
+  if (!propId || cantidad <= 0) {
+    alert('Datos de compra inválidos. Serás redirigido.');
+    window.location.href = 'propiedades.html';
+    return;
+  }
+
+  try {
+    const props = await getProperties();
+    const prop = props.find(p => String(p.id) === String(propId));
+
+    if (!prop) {
+      alert('Propiedad no encontrada');
+      window.location.href = 'propiedades.html';
+      return;
+    }
+
+    // Calcular totales
+    const precioToken = Number(prop.precio_token || prop.precio || 0);
+    const subtotal = precioToken * cantidad;
+    const comision = subtotal * 0.02;
+    const total = subtotal + comision;
+
+    // Llenar imagen y datos destacados
+    const imagen = (Array.isArray(prop.fotos) && prop.fotos.length) 
+      ? prop.fotos[0] 
+      : (prop.url || 'img/placeholder.png');
+    
+    document.getElementById('prop-imagen').src = imagen;
+    document.getElementById('prop-titulo').textContent = prop.titulo || 'Sin título';
+    document.getElementById('prop-ubicacion').textContent = 
+      `${prop.ciudad || ''} • ${prop.tipo || ''} • ${prop.m2 || ''} m²`;
+
+    // Llenar resumen
+    document.getElementById('cantidad-tokens').textContent = cantidad;
+    document.getElementById('precio-token').textContent = `${precioToken.toFixed(2)} EUR`;
+    document.getElementById('subtotal').textContent = `${subtotal.toFixed(2)} EUR`;
+    document.getElementById('comision').textContent = `${comision.toFixed(2)} EUR`;
+    document.getElementById('total-pagar').textContent = `${total.toFixed(2)} EUR`;
+
+    // Guardar en sessionStorage para el proceso de pago
+    sessionStorage.setItem('compra-actual', JSON.stringify({
+      propiedadId: propId,
+      propiedad: prop.titulo,
+      ciudad: prop.ciudad,
+      imagen: imagen,
+      cantidad,
+      precioToken,
+      subtotal,
+      comision,
+      total
+    }));
+
+  } catch (err) {
+    console.error('[COMPRA] Error cargando propiedad', err);
+    alert('Error al cargar los datos. Intenta nuevamente.');
+    window.location.href = 'propiedades.html';
+  }
+});
+
+// Formateo de campos de tarjeta
+const numeroTarjeta = document.getElementById('numero-tarjeta');
+numeroTarjeta?.addEventListener('input', (e) => {
+  let val = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+  let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+  e.target.value = formatted;
+});
+
+const fechaExp = document.getElementById('fecha-expiracion');
+fechaExp?.addEventListener('input', (e) => {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val.length >= 2) {
+    val = val.slice(0, 2) + '/' + val.slice(2, 4);
+  }
+  e.target.value = val;
+});
+
+const cvv = document.getElementById('cvv');
+cvv?.addEventListener('input', (e) => {
+  e.target.value = e.target.value.replace(/\D/g, '');
+});
+
+// Validación básica de tarjeta (Luhn algorithm)
+function validarNumeroTarjeta(numero) {
+  const digits = numero.replace(/\D/g, '');
+  if (digits.length < 13 || digits.length > 19) return false;
+  
+  let sum = 0;
+  let isEven = false;
+  
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits[i], 10);
+    
+    if (isEven) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    
+    sum += digit;
+    isEven = !isEven;
+  }
+  
+  return sum % 10 === 0;
+}
+
+// Procesar pago
+const formPago = document.getElementById('form-pago');
+formPago?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const numeroTarjetaVal = document.getElementById('numero-tarjeta')?.value || '';
+  const fechaExpVal = document.getElementById('fecha-expiracion')?.value || '';
+  const cvvVal = document.getElementById('cvv')?.value || '';
+  
+  // Validaciones
+  if (!validarNumeroTarjeta(numeroTarjetaVal)) {
+    alert('❌ Número de tarjeta inválido');
+    return;
+  }
+  
+  const [mes, anio] = fechaExpVal.split('/');
+  const mesNum = parseInt(mes, 10);
+  const anioNum = parseInt('20' + anio, 10);
+  const ahora = new Date();
+  
+  if (!mes || !anio || mesNum < 1 || mesNum > 12) {
+    alert('❌ Fecha de expiración inválida');
+    return;
+  }
+  
+  if (anioNum < ahora.getFullYear() || 
+      (anioNum === ahora.getFullYear() && mesNum < (ahora.getMonth() + 1))) {
+    alert('❌ La tarjeta está vencida');
+    return;
+  }
+  
+  if (cvvVal.length < 3) {
+    alert('❌ CVV inválido');
+    return;
+  }
+  
+  const btnPagar = document.getElementById('btn-pagar');
+  btnPagar.disabled = true;
+  btnPagar.textContent = 'Procesando pago...';
+
+  try {
+    const compra = JSON.parse(sessionStorage.getItem('compra-actual') || '{}');
+    const nombre = localStorage.getItem('nombre') || 'Usuario';
+    const email = localStorage.getItem('email') || '';
+
+    // Simular llamada a API de pago
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Guardar en localStorage
+    const misTokens = JSON.parse(localStorage.getItem('misTokens') || '[]');
+    misTokens.push({
+      id: Date.now(),
+      propiedadId: compra.propiedadId,
+      propiedad: compra.propiedad,
+      ciudad: compra.ciudad,
+      imagen: compra.imagen,
+      cantidad: compra.cantidad,
+      precioToken: compra.precioToken,
+      total: compra.total,
+      fecha: new Date().toISOString(),
+      usuario: nombre
+    });
+    localStorage.setItem('misTokens', JSON.stringify(misTokens));
+
+    // Limpiar datos temporales
+    sessionStorage.removeItem('compra-actual');
+    sessionStorage.removeItem('compra-desde-chat');
+
+    alert('✅ ¡Compra realizada con éxito!\n\nRecibirás un correo de confirmación.');
+    window.location.href = 'mis-tokens.html';
+    
+  } catch (err) {
+    console.error('[COMPRA] Error procesando pago', err);
+    alert('❌ Error al procesar el pago. Por favor intenta nuevamente.');
+    btnPagar.disabled = false;
+    btnPagar.textContent = 'Confirmar compra';
+  }
+});
+</script>
+</body>
+</html>
