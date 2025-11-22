@@ -256,54 +256,37 @@ body{
 .chat-send{padding:8px 12px;border-radius:6px;border:none;background:#0b7cff;color:#fff;cursor:pointer;}
 .chat-muted{font-size:12px;color:#666;margin-top:8px;text-align:center;}
 .loading-dot{display:inline-block;width:8px;height:8px;background:#bbb;border-radius:50%;margin-right:4px;animation:blink 1s infinite;}
-@keyframes blink{0%{opacity:0.2}50%{opacity:1}100%{opacity:0.2}
+@keyframes blink{0%{opacity:0.2}50%{opacity:1}100%{opacity:0.2}}
 
-/* Sidebar fijo del asistente */
-/*#chat-sidebar{
-  position:fixed;
-  top:0;
-  right:0;
-  width:350px;
-  height:100vh;
-  background:rgba(255,255,255,0.95);
-  backdrop-filter:saturate(180%) blur(6px);
-  box-shadow:-4px 0 18px rgba(0,0,0,0.08);
-  padding:12px 12px 70px;
+
+/* Propiedades header */
+.site-header-Propiedades{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* izquierda */
+  gap:16px;
+  margin-bottom:24px;
+}
+.site-logo-propiedades{
+  width:72px;
+  height:auto;
+  object-fit:contain;
+  flex:0 0 72px;
+}
+.site-header-Propiedades .header-text{
   display:flex;
   flex-direction:column;
-  z-index:1000;
-  border-left:1px solid var(--border);
+  align-items:flex-start;
+}
+.site-header-Propiedades h1{
+  margin:0;
+  font-size:1.8rem;
+  color:var(--accent);
+}
+.site-header-Propiedades .subtitle{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:0.95rem;
 }
 
-#chat-sidebar-content{
-  flex:1;
-  overflow:auto;
-}
-
-/* Ajustar contenido principal para no quedar debajo del sidebar */
-/*.container{
-  margin-right:370px; /* ancho + margen */
-}
-
-/* Responsivo: ocultar sidebar y liberar margen en pantallas pequeñas *//*
-@media (max-width:768px){
-  #chat-sidebar{
-    position:static;
-    width:100%;
-    height:auto;
-    box-shadow:none;
-    border-left:none;
-    margin-top:24px;
-    padding:0;
-  }
-  .container{
-    margin-right:auto;
-  }
-  #chat-sidebar-content{
-    max-height:480px;
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:12px;
-    background:#fff;
-  }
-}
+ 

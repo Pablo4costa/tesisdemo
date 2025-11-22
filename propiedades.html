@@ -57,36 +57,6 @@
   margin:6px 0 0;
 }
 
-/* Propiedades header */
-.site-header-Propiedades{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start; /* izquierda */
-  gap:16px;
-  margin-bottom:24px;
-}
-.site-logo-propiedades{
-  width:72px;
-  height:auto;
-  object-fit:contain;
-  flex:0 0 72px;
-}
-.site-header-Propiedades .header-text{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-}
-.site-header-Propiedades h1{
-  margin:0;
-  font-size:1.8rem;
-  color:var(--accent);
-}
-.site-header-Propiedades .subtitle{
-  margin:4px 0 0;
-  color:var(--muted);
-  font-size:0.95rem;
-}
-
 /* user bar más visible y separado del filtro */
 #userBar{
   font-size: 1rem;      /* más grande que .small */
@@ -454,6 +424,127 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } else {
     console.warn('[PROPIEDADES] initGlobalChat no disponible');
+  }
+});
+
+// Reemplazar el bloque del chat (dentro del <script> al final del body)
+
+const CHAT_WEBHOOK = "https://palasino.app.n8n.cloud/webhook/54a798e5-d0ea-413c-8ae6-c50705adec74/chat";
+if (!localStorage.hgSid) {
+  localStorage.hgSid = (crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
+}
+const sid = localStorage.hgSid;
+const form = document.getElementById('chat-form');
+const input = document.getElementById('chat-input');
+const messages = document.getElementById('chat-messages');
+const sendBtn = document.getElementById('send-btn');
+
+function addMessage(text, sender = 'user') {
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + sender;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  row.appendChild(bubble);
+  messages.appendChild(row);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTyping() {
+  const t = document.createElement('div');
+  t.id = 'typing';
+  t.className = 'msg-row bot';
+  t.innerHTML = '<div class="bubble typing"><span></span><span></span><span></span></div>';
+  messages.appendChild(t);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+// NUEVA: Procesar compra desde chat
+function procesarCompraDesdeChat(compra) {
+  const { propiedadId, cantidad } = compra;
+  
+  if (!propiedadId || !cantidad || cantidad <= 0) {
+    addMessage('⚠️ Datos de compra inválidos', 'bot');
+    return;
+  }
+  
+  // Guardar contexto de compra
+  sessionStorage.setItem('compra-desde-chat', JSON.stringify({
+    propiedadId,
+    cantidad,
+    timestamp: Date.now()
+  }));
+  
+  // Mensaje de transición
+  addMessage('🛒 Redirigiendo al proceso de pago...', 'bot');
+  
+  // Redirigir a página de compra
+  setTimeout(() => {
+    window.location.href = `detalle-compra.html?propiedad=${propiedadId}&cantidad=${cantidad}`;
+  }, 800);
+}
+
+// Mensaje de bienvenida
+addMessage('Hola, soy tu asistente virtual. ¿En qué puedo ayudarte?', 'bot');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  
+  addMessage(text, 'user');
+  input.value = '';
+  sendBtn.disabled = true;
+  showTyping();
+  
+  try {
+    const res = await fetch(CHAT_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: text, 
+        sessionId: sid,
+        context: {
+          page: 'propiedades',
+          usuario: localStorage.getItem('nombre') || 'Invitado',
+          propiedades: window.propiedadesLoaded || []
+        }
+      })
+    });
+    
+    let data = {};
+    try { 
+      data = await res.json(); 
+    } catch {}
+    
+    hideTyping();
+    
+    // Mostrar mensaje del bot
+    addMessage(data?.message || 'No se recibió respuesta', 'bot');
+    
+    // NUEVO: Detectar acción de compra
+    if (data.action === 'compra' && data.compra) {
+      procesarCompraDesdeChat(data.compra);
+    }
+    
+    // NUEVO: Detectar acción de filtrado (opcional para futuro)
+    if (data.action === 'filter' && data.filters) {
+      // aplicarFiltrosDesdeChat(data.filters); 
+      // (implementar después si lo necesitas)
+    }
+    
+  } catch (err) {
+    console.error('[CHAT] Error:', err);
+    hideTyping();
+    addMessage('Error al conectar con el servidor', 'bot');
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
   }
 });
 </script>
