@@ -107,6 +107,59 @@
       actionsDiv.style.display = 'none';
     }
 
+    function getCurrentPageContext(){
+      const params = new URLSearchParams(window.location.search || '');
+      const currentPropertyId = parsePositiveInt(
+        params.get('propiedad') ||
+        params.get('propiedadId') ||
+        params.get('property_id') ||
+        params.get('id')
+      );
+
+      return {
+        path: window.location.pathname,
+        page: (window.location.pathname.split('/').pop() || 'index.html'),
+        propiedad_actual_id: currentPropertyId,
+        query: Object.fromEntries(params.entries())
+      };
+    }
+
+    function normalizePurchaseRoute(rawRoute){
+      if (!rawRoute) return rawRoute;
+
+      let route;
+      try {
+        route = new URL(rawRoute, window.location.origin);
+      } catch (_) {
+        return rawRoute;
+      }
+
+      const target = (route.pathname.split('/').pop() || '').toLowerCase();
+      if (target !== 'detalle-compra.html') {
+        return route.pathname + route.search + route.hash;
+      }
+
+      const currentCtx = getCurrentPageContext();
+      const hasProperty = route.searchParams.get('propiedad') ||
+        route.searchParams.get('propiedadId') ||
+        route.searchParams.get('property_id') ||
+        route.searchParams.get('id');
+
+      if (!hasProperty && currentCtx.propiedad_actual_id) {
+        route.searchParams.set('propiedad', String(currentCtx.propiedad_actual_id));
+      }
+
+      const hasQuantity = route.searchParams.get('cantidad') ||
+        route.searchParams.get('tokens') ||
+        route.searchParams.get('cantidad_tokens') ||
+        route.searchParams.get('qty');
+      if (!hasQuantity) {
+        route.searchParams.set('cantidad', '1');
+      }
+
+      return route.pathname + route.search + route.hash;
+    }
+
     function parsePositiveInt(value){
       const n = Number.parseInt(value, 10);
       return Number.isFinite(n) && n > 0 ? n : null;
@@ -172,6 +225,7 @@
           nombre_usuario: nombre,
           mensaje: text,
           historial: chatHistory.filter(m => m.content !== '⏳ Procesando...'),
+          contexto: getCurrentPageContext(),
           confirmacion: isConfirmation,
           accion_confirmada: isConfirmation ? pendingAction : null
         };
@@ -223,9 +277,10 @@
           }
 
           if (nav.comando === 'navegar' && nav.parametros?.ruta) {
-            console.log('[CHAT-NAV] Ejecutando navigateTo para ruta:', nav.parametros.ruta);
+            const normalizedRoute = normalizePurchaseRoute(nav.parametros.ruta);
+            console.log('[CHAT-NAV] Ejecutando navigateTo para ruta:', normalizedRoute);
             if (typeof window.navigateTo === 'function') {
-              window.navigateTo(nav.parametros.ruta);
+              window.navigateTo(normalizedRoute);
             }
           }
         }
