@@ -128,6 +128,19 @@ async function renderDetalle(){
       return;
     }
 
+    try {
+      sessionStorage.setItem('housegur.lastProperty', JSON.stringify({
+        id: Number(prop.id),
+        titulo: prop.titulo || '',
+        ciudad: prop.ciudad || '',
+        tipo: prop.tipo || '',
+        timestamp: Date.now(),
+        source: 'detalle.renderDetalle'
+      }));
+    } catch (e) {
+      console.warn('[DETALLE] No se pudo guardar housegur.lastProperty', e);
+    }
+
     const fotos = Array.isArray(prop.fotos) && prop.fotos.length
       ? prop.fotos
       : (prop.url ? [prop.url] : ['img/placeholder.png']);
