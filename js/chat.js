@@ -269,10 +269,16 @@
           const nav = data.navegacion;
           console.log('[CHAT-NAV] Comando detectado:', nav.comando, 'Parámetros:', nav.parametros);
 
-          if (nav.comando === 'ver_propiedades' && nav.parametros?.filtros) {
-            console.log('[CHAT-NAV] Ejecutando navigateToProperties con filtros:', nav.parametros.filtros);
+          if (nav.comando === 'ver_propiedades' || nav.comando === 'filtrar_propiedades' || nav.comando === 'buscar_propiedades') {
+            const rawParams = nav.parametros || {};
+            const filtros = rawParams.filtros && typeof rawParams.filtros === 'object'
+              ? rawParams.filtros
+              : rawParams;
+            console.log('[CHAT-NAV] Ejecutando navigateToProperties con filtros:', filtros);
             if (typeof window.navigateToProperties === 'function') {
-              window.navigateToProperties(nav.parametros.filtros);
+              window.navigateToProperties(filtros);
+            } else if (typeof window.navigateTo === 'function') {
+              window.navigateTo('propiedades.html');
             }
           }
 
@@ -297,6 +303,12 @@
               window.navigateTo(normalizedRoute);
             }
           }
+        }
+
+        // Compatibilidad: algunos flujos devuelven acción de filtrado en campos top-level.
+        if (data.action === 'filter' && data.filters && typeof window.navigateToProperties === 'function') {
+          console.log('[CHAT-NAV] action=filter detectado. Ejecutando navigateToProperties con:', data.filters);
+          window.navigateToProperties(data.filters);
         }
 
         // Compatibilidad: algunos flujos del webhook envían una acción estructurada de compra.
