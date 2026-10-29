@@ -23,13 +23,18 @@
 
 
 <script src="js/app.js"></script>
+<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script>
 // Get parameters from URL
 const action = getParam('action') || 'buy'; // buy or sell
 const property_id = getParam('property_id');
-const property_title = getParam('property_title') || 'Propiedad';
-const price_per_token = getParam('price_per_token') || 0;
+// property_title / price_per_token llegan desde el listado; desde el chat solo llega el id
+// y se completan con la API en loadProperty()
+let property_title = getParam('property_title') || '';
+let price_per_token = getParam('price_per_token') || 0;
+const cantidad_param = Number(getParam('cantidad'));
+const cantidad_inicial = Number.isInteger(cantidad_param) && cantidad_param > 0 ? cantidad_param : 10;
 
 // Get user info from localStorage
 const usuario_id = localStorage.getItem('usuario_id');
@@ -57,25 +62,30 @@ document.getElementById('btnCancelar').addEventListener('click', () => {
 });
 
 // Show summary
-document.getElementById('resumen').innerHTML = `
+let cantidadInput = null;
+let totalEUR = null;
+
+function renderResumen() {
+  document.getElementById('resumen').innerHTML = `
 <p>Acción: <strong>${action === 'buy' ? 'Comprar tokens' : 'Vender tokens'}</strong></p>
 <p>Usuario: <strong>${escapeHtml(nombre || 'Invitado')}</strong></p>
-<p>Propiedad: <strong>${escapeHtml(property_title)}</strong></p>
+<p>Propiedad: <strong>${escapeHtml(property_title || 'Propiedad')}</strong></p>
 <p>Precio por token: <strong>${price_per_token} EUR</strong></p>
 <div style="margin-top: 12px;">
   <label class="field">
     <span>Cantidad de tokens:</span>
-    <input id="cantidadTokens" type="number" placeholder="Ej. 10" min="1" value="10" />
+    <input id="cantidadTokens" type="number" placeholder="Ej. 10" min="1" value="${cantidad_inicial}" />
   </label>
 </div>
 <div id="totalCalc" style="margin-top: 12px; padding: 12px; background: #f5f5f5; border-radius: 6px;">
-  <p>Total: <strong id="totalEUR">100 EUR</strong></p>
+  <p>Total: <strong id="totalEUR">0 EUR</strong></p>
 </div>
 `;
-
-// Update total calculation on input change
-const cantidadInput = document.getElementById('cantidadTokens');
-const totalEUR = document.getElementById('totalEUR');
+  cantidadInput = document.getElementById('cantidadTokens');
+  totalEUR = document.getElementById('totalEUR');
+  cantidadInput.addEventListener('input', updateTotal);
+  updateTotal(); // Initial calculation
+}
 
 function updateTotal() {
   const cantidad = Number(cantidadInput.value) || 0;
@@ -83,8 +93,45 @@ function updateTotal() {
   totalEUR.textContent = total.toLocaleString() + ' EUR';
 }
 
-cantidadInput.addEventListener('input', updateTotal);
-updateTotal(); // Initial calculation
+function mostrarErrorPropiedad(mensaje) {
+  document.getElementById('resumen').innerHTML =
+    `<p>❌ <strong>${escapeHtml(mensaje)}</strong></p><p><a class="btn" href="propiedades.html">Ver propiedades</a></p>`;
+  document.getElementById('btnConfirm').disabled = true;
+}
+
+// Load the property from the API so the page works even when only the ID is in the URL
+// (e.g. when the chat assistant navigates here)
+async function loadProperty() {
+  const idNum = Number(property_id);
+  if (!property_id || !Number.isInteger(idNum) || idNum <= 0) {
+    mostrarErrorPropiedad('No se indicó una propiedad válida.');
+    return;
+  }
+
+  renderResumen();
+  try {
+    const props = await getProperties();
+    const prop = (props || []).find(p => Number(p.id) === idNum);
+    if (!prop) {
+      mostrarErrorPropiedad(`La propiedad ${idNum} no existe.`);
+      return;
+    }
+    property_title = prop.titulo || property_title;
+    price_per_token = Number(prop.precio_token ?? prop.precio ?? price_per_token);
+    const cantidadActual = cantidadInput.value;
+    renderResumen();
+    cantidadInput.value = cantidadActual;
+    updateTotal();
+  } catch (err) {
+    console.error('[CONFIRM] Failed to load property:', err);
+    // Si el listado ya pasó título y precio por URL, se sigue con esos datos
+    if (!property_title || !Number(price_per_token)) {
+      mostrarErrorPropiedad('No se pudieron cargar los datos de la propiedad.');
+    }
+  }
+}
+
+loadProperty();
 
 // Handle confirm button
 document.getElementById('btnConfirm').addEventListener('click', async () => {

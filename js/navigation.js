@@ -35,6 +35,31 @@ window.navigateToPropertyDetail = function(id) {
 };
 
 /**
+ * Navigate to the buy/sell confirmation page (does NOT execute the transaction)
+ * @param {number} id - Property ID (must be a positive integer)
+ * @param {number} cantidad - Optional number of tokens
+ * @param {string} action - 'buy' or 'sell'
+ * @returns {boolean} false if the id is invalid and no navigation happened
+ */
+window.navigateToBuy = function(id, cantidad, action) {
+  const propId = Number(id);
+  if (!Number.isInteger(propId) || propId <= 0) {
+    console.warn('[NAV] ID de propiedad inválido, no se navega:', id);
+    return false;
+  }
+
+  const params = new URLSearchParams();
+  params.set('action', action === 'sell' ? 'sell' : 'buy');
+  params.set('property_id', propId);
+  const cant = Number(cantidad);
+  if (Number.isInteger(cant) && cant > 0) params.set('cantidad', cant);
+
+  console.log('[NAV] Navegando a confirmación:', params.toString());
+  window.location.href = 'confirm.html?' + params.toString();
+  return true;
+};
+
+/**
  * Navigate to user's holdings (portfolio) page
  */
 window.navigateToHoldings = function() {

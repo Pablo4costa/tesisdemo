@@ -332,6 +332,8 @@ grid.addEventListener && grid.addEventListener('click', (e) => {
   const prop = propiedadesActuales.find(p=>p.id===propId);
   if (!prop) return;
   const q = `Dime detalles de la propiedad "${prop.titulo}" en ${prop.ciudad}.`;
+  // chat.js envía esta propiedad como contexto.propiedad_actual en la siguiente pregunta
+  window.__housegur_propiedad_actual = propId;
   // if chat already initialized, put question in input
   if (window.__housegur_chat && typeof window.__housegur_chat.sendMessage === 'function') {
     window.__housegur_chat.sendMessage(q);

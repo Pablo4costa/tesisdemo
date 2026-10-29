@@ -107,6 +107,37 @@
       actionsDiv.style.display = 'none';
     }
 
+    function removeProcessing(){
+      if (chatHistory.length && chatHistory[chatHistory.length - 1].content === '⏳ Procesando...') {
+        chatHistory.pop();
+        saveHistory();
+      }
+    }
+
+    // Solo mensajes reales de la conversación (sin errores del cliente ni "Procesando"), últimos 6
+    function getHistorialParaEnviar(){
+      return chatHistory
+        .filter(m => (m.role === 'user' || m.role === 'assistant') &&
+          m.content !== '⏳ Procesando...' && !String(m.content).startsWith('❌'))
+        .slice(-6);
+    }
+
+    function getPagina(){
+      return location.pathname.split('/').pop() || 'index.html';
+    }
+
+    // ID de la propiedad que el usuario está viendo: ?propiedad= en detalle.html,
+    // o la fijada por "Preguntar sobre esta" en el listado; null en el resto
+    function getPropiedadActual(){
+      const fijada = Number(window.__housegur_propiedad_actual);
+      if (Number.isInteger(fijada) && fijada > 0) return fijada;
+      if (getPagina() === 'detalle.html') {
+        const id = Number(new URLSearchParams(location.search).get('propiedad'));
+        if (Number.isInteger(id) && id > 0) return id;
+      }
+      return null;
+    }
+
     let pending = false;
     async function sendMessage(text, isConfirmation = false){
       if (!text || pending) return;
@@ -117,7 +148,8 @@
       addMessage('assistant', '⏳ Procesando...');
 
       if (!WEBHOOK) {
-        addMessage('assistant', '❌ Webhook no configurado.');
+        removeProcessing();
+        addMessage('error', '❌ Webhook no configurado.');
         pending = false;
         return;
       }
@@ -127,10 +159,16 @@
           usuario_id,
           nombre_usuario: nombre,
           mensaje: text,
-          historial: chatHistory.filter(m => m.content !== '⏳ Procesando...'),
+          historial: getHistorialParaEnviar(),
           confirmacion: isConfirmation,
-          accion_confirmada: isConfirmation ? pendingAction : null
+          accion_confirmada: isConfirmation ? pendingAction : null,
+          contexto: {
+            pagina: getPagina(),
+            propiedad_actual: getPropiedadActual()
+          }
         };
+        // La propiedad fijada por "Preguntar sobre esta" aplica solo a la siguiente pregunta
+        window.__housegur_propiedad_actual = null;
 
         console.log('[CHAT] Payload:', payload);
 
@@ -140,9 +178,7 @@
           body: JSON.stringify(payload)
         });
 
-        if (chatHistory.length && chatHistory[chatHistory.length - 1].content === '⏳ Procesando...') {
-          chatHistory.pop();
-        }
+        removeProcessing();
 
         if (!resp.ok) {
           throw new Error(`HTTP ${resp.status}`);
@@ -171,6 +207,17 @@
             }
           }
 
+          // comprar_tokens / vender_tokens solo llevan a confirm.html; no ejecutan la operación
+          if (nav.comando === 'comprar_tokens' || nav.comando === 'vender_tokens') {
+            console.log('[CHAT-NAV] Ejecutando navigateToBuy:', nav.parametros);
+            const ok = typeof window.navigateToBuy === 'function' &&
+              window.navigateToBuy(nav.parametros?.id, nav.parametros?.cantidad,
+                nav.comando === 'vender_tokens' ? 'sell' : 'buy');
+            if (!ok) {
+              addMessage('error', '❌ No se pudo identificar la propiedad para continuar con la operación.');
+            }
+          }
+
           if (nav.comando === 'ver_portafolio') {
             console.log('[CHAT-NAV] Ejecutando navigateToHoldings');
             if (typeof window.navigateToHoldings === 'function') {
@@ -194,10 +241,8 @@
 
       } catch (err) {
         console.error('[CHAT] Error:', err);
-        if (chatHistory.length && chatHistory[chatHistory.length - 1].content === '⏳ Procesando...') {
-          chatHistory.pop();
-        }
-        addMessage('assistant', `❌ Error: ${err.message}`);
+        removeProcessing();
+        addMessage('error', `❌ Error: ${err.message}`);
         hideActionPanel();
       } finally {
         pending = false;
