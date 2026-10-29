@@ -109,25 +109,17 @@
 
     function getCurrentPageContext(){
       const params = new URLSearchParams(window.location.search || '');
-      let lastPropCtx = {};
-      try {
-        lastPropCtx = JSON.parse(sessionStorage.getItem('housegur.lastProperty') || '{}');
-      } catch (_) {
-        lastPropCtx = {};
-      }
       const currentPropertyId = parsePositiveInt(
         params.get('propiedad') ||
         params.get('propiedadId') ||
         params.get('property_id') ||
-        params.get('id') ||
-        lastPropCtx.id
+        params.get('id')
       );
 
       return {
         path: window.location.pathname,
         page: (window.location.pathname.split('/').pop() || 'index.html'),
         propiedad_actual_id: currentPropertyId,
-        propiedad_ultima_id: parsePositiveInt(lastPropCtx.id),
         query: Object.fromEntries(params.entries())
       };
     }
@@ -157,10 +149,6 @@
         route.searchParams.set('propiedad', String(currentCtx.propiedad_actual_id));
       }
 
-      if (!hasProperty && !route.searchParams.get('propiedad') && currentCtx.propiedad_ultima_id) {
-        route.searchParams.set('propiedad', String(currentCtx.propiedad_ultima_id));
-      }
-
       const hasQuantity = route.searchParams.get('cantidad') ||
         route.searchParams.get('tokens') ||
         route.searchParams.get('cantidad_tokens') ||
@@ -185,16 +173,14 @@
         compra?.cantidad ?? compra?.tokens ?? compra?.cantidad_tokens ?? compra?.qty
       ) || 1;
       const propertyTitle = compra?.property_title || compra?.propiedad_titulo || compra?.titulo || '';
-      const currentCtx = getCurrentPageContext();
-      const resolvedPropId = propId || currentCtx.propiedad_actual_id || currentCtx.propiedad_ultima_id;
 
-      if (!resolvedPropId && !propertyTitle) {
+      if (!propId && !propertyTitle) {
         return false;
       }
 
       const compraCtx = {
-        propiedadId: resolvedPropId,
-        property_id: resolvedPropId,
+        propiedadId: propId,
+        property_id: propId,
         cantidad,
         tokens: cantidad,
         property_title: propertyTitle,
@@ -203,8 +189,8 @@
       sessionStorage.setItem('compra-desde-chat', JSON.stringify(compraCtx));
 
       const url = new URL(window.location.origin + '/detalle-compra.html');
-      if (resolvedPropId) {
-        url.searchParams.set('propiedad', String(resolvedPropId));
+      if (propId) {
+        url.searchParams.set('propiedad', String(propId));
       }
       url.searchParams.set('cantidad', String(cantidad));
       if (propertyTitle) {

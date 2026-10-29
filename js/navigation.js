@@ -31,15 +31,6 @@ window.navigateToProperties = function(filtros) {
  */
 window.navigateToPropertyDetail = function(id) {
   console.log('[NAV] Navegando a detalle de propiedad:', id);
-  try {
-    sessionStorage.setItem('housegur.lastProperty', JSON.stringify({
-      id: Number(id),
-      timestamp: Date.now(),
-      source: 'navigateToPropertyDetail'
-    }));
-  } catch (e) {
-    console.warn('[NAV] No se pudo guardar housegur.lastProperty', e);
-  }
   window.location.href = `detalle.html?propiedad=${id}`;
 };
 

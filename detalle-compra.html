@@ -351,14 +351,6 @@ function readCompraContext() {
   }
 }
 
-function readLastPropertyContext() {
-  try {
-    return JSON.parse(sessionStorage.getItem('housegur.lastProperty') || '{}');
-  } catch (_) {
-    return {};
-  }
-}
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -368,17 +360,13 @@ function escapeHtml(text) {
 // Cargar datos de la compra
 document.addEventListener('DOMContentLoaded', async () => {
   const compraCtx = readCompraContext();
-  const lastPropCtx = readLastPropertyContext();
   const propId = parsePositiveInt(getFirstParam([
     'propiedad',
     'propiedadId',
     'property_id',
     'id',
     'prop'
-  ])) ||
-    parsePositiveInt(compraCtx.propiedadId) ||
-    parsePositiveInt(compraCtx.property_id) ||
-    parsePositiveInt(lastPropCtx.id);
+  ])) || parsePositiveInt(compraCtx.propiedadId) || parsePositiveInt(compraCtx.property_id);
 
   const cantidad = parsePositiveInt(getFirstParam([
     'cantidad',
@@ -388,10 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ])) || parsePositiveInt(compraCtx.cantidad) || parsePositiveInt(compraCtx.tokens) || 1;
 
   const propTitleFromUrl = getFirstParam(['property_title', 'propiedad_titulo', 'titulo']);
-  const propTitle = propTitleFromUrl ||
-    compraCtx.property_title ||
-    compraCtx.propiedadTitulo ||
-    lastPropCtx.titulo || '';
+  const propTitle = propTitleFromUrl || compraCtx.property_title || compraCtx.propiedadTitulo || '';
 
   // Verificar si viene desde chat
   const desdeChat = sessionStorage.getItem('compra-desde-chat');
