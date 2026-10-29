@@ -107,50 +107,6 @@
       actionsDiv.style.display = 'none';
     }
 
-    function parsePositiveInt(value){
-      const n = Number.parseInt(value, 10);
-      return Number.isFinite(n) && n > 0 ? n : null;
-    }
-
-    function redirectToPurchase(compra){
-      const propId = parsePositiveInt(
-        compra?.propiedadId ?? compra?.property_id ?? compra?.id ?? compra?.propiedad
-      );
-      const cantidad = parsePositiveInt(
-        compra?.cantidad ?? compra?.tokens ?? compra?.cantidad_tokens ?? compra?.qty
-      ) || 1;
-      const propertyTitle = compra?.property_title || compra?.propiedad_titulo || compra?.titulo || '';
-
-      if (!propId && !propertyTitle) {
-        return false;
-      }
-
-      const compraCtx = {
-        propiedadId: propId,
-        property_id: propId,
-        cantidad,
-        tokens: cantidad,
-        property_title: propertyTitle,
-        timestamp: Date.now()
-      };
-      sessionStorage.setItem('compra-desde-chat', JSON.stringify(compraCtx));
-
-      const url = new URL(window.location.origin + '/detalle-compra.html');
-      if (propId) {
-        url.searchParams.set('propiedad', String(propId));
-      }
-      url.searchParams.set('cantidad', String(cantidad));
-      if (propertyTitle) {
-        url.searchParams.set('property_title', propertyTitle);
-      }
-
-      addMessage('assistant', '🛒 Te llevo al proceso de compra...');
-      setTimeout(() => {
-        window.location.href = url.toString();
-      }, 500);
-      return true;
-    }
-
     let pending = false;
     async function sendMessage(text, isConfirmation = false){
       if (!text || pending) return;
@@ -228,11 +184,6 @@
               window.navigateTo(nav.parametros.ruta);
             }
           }
-        }
-
-        // Compatibilidad: algunos flujos del webhook envían una acción estructurada de compra.
-        if (data.action === 'compra' && data.compra) {
-          redirectToPurchase(data.compra);
         }
 
         if (data.accion_detectada && !isConfirmation) {

@@ -330,27 +330,6 @@ function getParam(name) {
   return params.get(name);
 }
 
-function getFirstParam(names) {
-  for (const name of names) {
-    const value = getParam(name);
-    if (value !== null && value !== '') return value;
-  }
-  return null;
-}
-
-function parsePositiveInt(value) {
-  const n = Number.parseInt(value, 10);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function readCompraContext() {
-  try {
-    return JSON.parse(sessionStorage.getItem('compra-desde-chat') || '{}');
-  } catch (_) {
-    return {};
-  }
-}
-
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -359,24 +338,8 @@ function escapeHtml(text) {
 
 // Cargar datos de la compra
 document.addEventListener('DOMContentLoaded', async () => {
-  const compraCtx = readCompraContext();
-  const propId = parsePositiveInt(getFirstParam([
-    'propiedad',
-    'propiedadId',
-    'property_id',
-    'id',
-    'prop'
-  ])) || parsePositiveInt(compraCtx.propiedadId) || parsePositiveInt(compraCtx.property_id);
-
-  const cantidad = parsePositiveInt(getFirstParam([
-    'cantidad',
-    'tokens',
-    'cantidad_tokens',
-    'qty'
-  ])) || parsePositiveInt(compraCtx.cantidad) || parsePositiveInt(compraCtx.tokens) || 1;
-
-  const propTitleFromUrl = getFirstParam(['property_title', 'propiedad_titulo', 'titulo']);
-  const propTitle = propTitleFromUrl || compraCtx.property_title || compraCtx.propiedadTitulo || '';
+  const propId = getParam('propiedad');
+  const cantidad = parseInt(getParam('cantidad') || '0', 10);
 
   // Verificar si viene desde chat
   const desdeChat = sessionStorage.getItem('compra-desde-chat');
@@ -386,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Compra desde chat:', JSON.parse(desdeChat));
   }
 
-  if (!propId && !propTitle) {
+  if (!propId || cantidad <= 0) {
     alert('Datos de compra inválidos. Serás redirigido.');
     window.location.href = 'propiedades.html';
     return;
@@ -394,14 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const props = await getProperties();
-    let prop = null;
-    if (propId) {
-      prop = props.find(p => String(p.id) === String(propId));
-    }
-    if (!prop && propTitle) {
-      const normalizedTitle = String(propTitle).trim().toLowerCase();
-      prop = props.find(p => String(p.titulo || '').trim().toLowerCase() === normalizedTitle);
-    }
+    const prop = props.find(p => String(p.id) === String(propId));
 
     if (!prop) {
       alert('Propiedad no encontrada');
@@ -434,7 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Guardar en sessionStorage para el proceso de pago
     sessionStorage.setItem('compra-actual', JSON.stringify({
-      propiedadId: prop.id,
+      propiedadId: propId,
       propiedad: prop.titulo,
       ciudad: prop.ciudad,
       imagen: imagen,
